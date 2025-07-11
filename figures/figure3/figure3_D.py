@@ -17,15 +17,19 @@ sequences = lrt.make_all_sequences(seq_len, ['L', 'R'])
 equil_duration = 2
 
 # parameter sweep
-amp_range = np.logspace(0, 2, 10)
-dur_range = np.linspace(0, 0.1, 10)
+amp_range = np.logspace(0, 2, 50)
+dur_range = np.linspace(0, 0.1, 50)
 dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration on x-axis
 dur_flat, amp_flat = dur_mesh.ravel(), amp_mesh.ravel()
 reliabilities = np.zeros(dur_flat.shape)
 
 for i, (dur, amp) in tqdm(enumerate(zip(dur_flat, amp_flat)), total=len(dur_flat)):
+    if dur == 0:
+        reliabilities[i] = 0.5
+        continue
+
     # define the stimulus
-    stim_map = lrt.make_stim_map(numPairs, dur, amp, l_kernel, r_kernel, dt)
+    stim_map = lrt.make_stim_map(numPairs, amp, dur, l_kernel, r_kernel, dt)
 
     # run the model
     FSM = lrt.make_FSM(numPairs, pset, Wji, stim_map, 2, dt=dt)
