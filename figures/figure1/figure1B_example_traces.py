@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sys import path
 path.append(r"model")
-import unified_model as model
+import model as model
 
-simulateISP = model.simulateISP
+simulateISP = model.simulateISP # type: ignore
 
 thetaE = 2
 thetaI = 5.5
