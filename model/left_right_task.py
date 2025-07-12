@@ -249,13 +249,11 @@ def FSM_reliability(sequences, FSM, start_node=1):
     
     """
     
-    
     seq_len = len(sequences[0])
     
     # trace all sequences on the graph
     nodes_dict = {node: [] for node in list(FSM.nodes)}
     for seq in sequences:
-        # start at the beginning
         current_node = start_node
         # trace the sequence
         for letter in seq:
