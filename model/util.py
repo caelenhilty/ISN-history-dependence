@@ -59,6 +59,33 @@ def load_fiducial_network(in_figure_folder:bool=False):
 
     return Wji, pset, amp, dur, l_kernel, r_kernel
 
+def make_data_folder(path:str):
+    """
+    Create a directory if it does not already exist.
+    
+    Parameters:
+    -----------
+    path (str): 
+        The path to create a data directory in.
+    
+    Returns:
+    --------
+    data_dir (str): 
+        The path to the created data directory.
+    """
+    from pathlib import Path
+
+    if Path(path + f'/data').exists():
+        id = 1
+        while Path(f'_{id}').exists():
+            id += 1
+        data_dir = path + f'/data_{id}'
+        Path(data_dir).mkdir(parents=True, exist_ok=True)
+    else:
+        data_dir = path + '/data'
+        Path(data_dir).mkdir(parents=True, exist_ok=True)
+    return data_dir
+
 # root solver -----------------------------------------------------------------
 # a constructor that makes a function to be used in the root finding algorithm
 # solutions are of the form [WEE, WEI, WIE, WII]
