@@ -18,7 +18,7 @@ equil_duration = 2
 
 # parameter sweep
 amp_range = np.logspace(0, 2, 50)
-dur_range = np.linspace(0, 0.1, 50)
+dur_range = np.linspace(0, 0.05, 50)
 dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration on x-axis
 dur_flat, amp_flat = dur_mesh.ravel(), amp_mesh.ravel()
 reliabilities = np.zeros(dur_flat.shape)
