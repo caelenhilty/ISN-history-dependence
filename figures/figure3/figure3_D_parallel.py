@@ -24,10 +24,9 @@ dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration
 dur_flat, amp_flat = dur_mesh.ravel(), amp_mesh.ravel()
 reliabilities = np.zeros(dur_flat.shape)
 
-for i, (dur, amp) in tqdm(enumerate(zip(dur_flat, amp_flat)), total=len(dur_flat)):
+def run_model(dur, amp):
     if dur == 0:
-        reliabilities[i] = 0.5
-        continue
+        return 0.5  # return a default reliability for zero duration
 
     # define the stimulus
     stim_map = lrt.make_stim_map(numPairs, amp, dur, l_kernel, r_kernel, dt)
@@ -35,24 +34,28 @@ for i, (dur, amp) in tqdm(enumerate(zip(dur_flat, amp_flat)), total=len(dur_flat
     # run the model
     FSM = lrt.make_FSM(numPairs, pset, Wji, stim_map, 2, dt=dt)
     reliability = lrt.FSM_reliability(sequences, FSM)
-    reliabilities[i] = reliability
+    return reliability
 
-# count the number of reliabilities.npy in the figures/figure3 directory
-if Path('figures/figure3/reliabilities.npy').exists():
-    id = 1
-    while Path(f'figures/figure3/reliabilities_{id}.npy').exists():
-        id += 1
-    np.save(f'figures/figure3/reliabilities_{id}.npy', reliabilities)
-else:
-    np.save('figures/figure3/reliabilities.npy', reliabilities)
+if __name__ == '__main__':
+    with mp.Pool(mp.cpu_count()) as pool:
+        reliabilities = list(tqdm(pool.starmap(run_model, zip(dur_flat, amp_flat)), total=len(dur_flat)))
 
-# quick plot of results
-fig, ax = plt.subplots(layout='constrained')
-c = ax.pcolormesh(dur_mesh, amp_mesh, reliabilities.reshape(dur_mesh.shape), cmap='viridis', shading='auto')
-ax.set_yscale('log')
-ax.set_xlabel(r"$\tau_{dur}$")
-ax.set_ylabel(r"$I_{app}$")
-cbar = fig.colorbar(c, ax=ax)
-cbar.set_label('Accuracy')
+    # count the number of reliabilities.npy in the figures/figure3 directory
+    if Path('figures/figure3/reliabilities.npy').exists():
+        id = 1
+        while Path(f'figures/figure3/reliabilities_{id}.npy').exists():
+            id += 1
+        np.save(f'figures/figure3/reliabilities_{id}.npy', reliabilities)
+    else:
+        np.save('figures/figure3/reliabilities.npy', reliabilities)
 
-plt.show()
+    # quick plot of results
+    fig, ax = plt.subplots(layout='constrained')
+    c = ax.pcolormesh(dur_mesh, amp_mesh, reliabilities.reshape(dur_mesh.shape), cmap='viridis', shading='auto')
+    ax.set_yscale('log')
+    ax.set_xlabel(r"$\tau_{dur}$")
+    ax.set_ylabel(r"$I_{app}$")
+    cbar = fig.colorbar(c, ax=ax)
+    cbar.set_label('Accuracy')
+
+    plt.show()
