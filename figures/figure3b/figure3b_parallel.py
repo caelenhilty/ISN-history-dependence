@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm 
 import pandas as pd
+import multiprocessing as mp
 
 import sys
 from pathlib import Path
@@ -17,13 +18,9 @@ seq_len = 6
 sequences = lrt.make_all_sequences(seq_len, ['L', 'R'])
 equil_duration = 2
 
-# now a bunch of trials! -- keep mapping between sequence and decision
-n_trials = 5
-seq_len = len(sequences[0])
-p_curves = np.zeros((n_trials, seq_len + 1))
-reliabilities = np.zeros(n_trials)
-decision_dict = {i:{} for i in range(n_trials)}
-for i in tqdm(range(n_trials)):
+n_trials = 10
+
+def run_trial(i):
     rng = np.random.default_rng(i)
     
     # make kernels -- same mean
@@ -40,7 +37,7 @@ for i in tqdm(range(n_trials)):
     # make FSM
     FSM = lrt.make_FSM(numPairs, pset, Wji, stim_map, 2, dt=dt)
     
-    reliabilities[i] = lrt.FSM_reliability(sequences, FSM)
+    reliability = lrt.FSM_reliability(sequences, FSM)
     
     # pcurve and decision dictionary computations -----------------------
     # trace all sequences on the graph
@@ -59,6 +56,7 @@ for i in tqdm(range(n_trials)):
 
     left_counts = np.zeros(seq_len + 1)
     left_choices = np.zeros(seq_len + 1)
+    decision_dict = {}
     for node in nodes_dict:
         # is the node a L or R node? based on frequency
         l_cue_counts = [seq.count('L') for seq in nodes_dict[node]]
@@ -69,7 +67,7 @@ for i in tqdm(range(n_trials)):
                 left_counts[count] += 1     # record distribution of `counts` terminating in current node
                 left_choices[count] += 0.5   # record how many times each `count` resulted in a left decision
             for seq in nodes_dict[node]:
-                decision_dict[i][seq] = 'Tie'
+                decision_dict[seq] = 'Tie'
         else:
             left_decision = num_below < num_above # True if L, False if R
             for count in l_cue_counts:
@@ -77,16 +75,46 @@ for i in tqdm(range(n_trials)):
                 left_choices[count] += left_decision   # record how many times each `count` resulted in a left decision
             # update dictionary
             for seq in nodes_dict[node]:
-                decision_dict[i][seq] = 'L' if left_decision else 'R'
+                decision_dict[seq] = 'L' if left_decision else 'R'
     
-    p_curves[i] = left_choices/left_counts
+    p_curve = left_choices/left_counts
 
-df_decisions = pd.DataFrame(decision_dict)
+    return reliability, p_curve, decision_dict
 
-# make a data folder
-data_dir = util.make_data_folder('figures/figure3b')
 
-# save the dataframe
-df_decisions.to_csv(f'{data_dir}/decision_dict.csv')
-np.save(f'{data_dir}/p_curves.npy', p_curves)
-np.save(f'{data_dir}/reliabilities.npy', reliabilities)
+if __name__ == '__main__':
+    run_trial(0)  # burn one in
+
+    import time as time
+    # test serial vs parallel
+    start_time = time.time()
+    for i in range(n_trials):
+        run_trial(i)
+    serial_time = time.time() - start_time
+    print(f"Serial Completed {n_trials} trials in {serial_time:.2f} seconds")
+
+    start_time = time.time()
+    with mp.Pool(mp.cpu_count()) as pool:
+        results = tqdm(pool.imap(run_trial, range(n_trials)), total=n_trials)
+    pool_time = time.time() - start_time
+    print(f"Parallel completed {n_trials} trials in {pool_time:.2f} seconds")
+
+    # # unpack results
+    # p_curves = np.zeros((n_trials, seq_len + 1))
+    # reliabilities = np.zeros(n_trials)
+    # for i, (reliability, p_curve, decision_dict) in enumerate(results):
+    #     reliabilities[i] = reliability
+    #     p_curves[i] = p_curve
+    #     if i == 0:
+    #         all_decision_dicts = {i: decision_dict}
+    #     else:
+    #         all_decision_dicts[i] = decision_dict
+    # df_decisions = pd.DataFrame(all_decision_dicts)
+
+    # # save results
+    # # make a data folder
+    # data_dir = util.make_data_folder('figures/figure3b')
+    # # save the dataframe
+    # df_decisions.to_csv(f'{data_dir}/decision_dict.csv')
+    # np.save(f'{data_dir}/p_curves.npy', p_curves)
+    # np.save(f'{data_dir}/reliabilities.npy', reliabilities)
