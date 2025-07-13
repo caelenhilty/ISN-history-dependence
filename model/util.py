@@ -6,6 +6,31 @@ import os as os
 
 # load fiducial_network.csv
 def load_fiducial_network(in_figure_folder:bool=False):
+    """
+    Load the fiducial network parameters from the CSV file.
+    If in_figure_folder is True, it assumes the script is run from a figure folder
+    and adjusts the path accordingly.
+    
+    Parameters:
+    in_figure_folder (bool): 
+        If True, adjusts the path to load the CSV file correctly.
+    
+    Returns:
+    --------
+    Wji (np.ndarray): 
+        The weight matrix.
+    pset (np.ndarray): 
+        The parameter set.
+    amp (float): 
+        The amplitude.
+    dur (float): 
+        The duration.
+    l_kernel (np.ndarray): 
+        The left kernel.
+    r_kernel (np.ndarray): 
+        The right kernel.
+    
+    """
     # original directory
     original_dir = os.getcwd()
 
