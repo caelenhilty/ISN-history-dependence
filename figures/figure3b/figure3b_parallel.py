@@ -88,33 +88,41 @@ if __name__ == '__main__':
     import time as time
     # test serial vs parallel
     start_time = time.time()
-    for i in range(n_trials):
-        run_trial(i)
+    reliabilities = []
+    for i in tqdm(range(n_trials)):
+        r, p, d = run_trial(i)
+        reliabilities.append(r)
     serial_time = time.time() - start_time
+    print(reliabilities)
     print(f"Serial Completed {n_trials} trials in {serial_time:.2f} seconds")
 
     start_time = time.time()
     with mp.Pool(mp.cpu_count()) as pool:
-        results = tqdm(pool.imap(run_trial, range(n_trials)), total=n_trials)
+        results = pool.map(run_trial, range(n_trials))
     pool_time = time.time() - start_time
+    pool.close()
+    pool.join()
     print(f"Parallel completed {n_trials} trials in {pool_time:.2f} seconds")
 
-    # # unpack results
-    # p_curves = np.zeros((n_trials, seq_len + 1))
-    # reliabilities = np.zeros(n_trials)
-    # for i, (reliability, p_curve, decision_dict) in enumerate(results):
-    #     reliabilities[i] = reliability
-    #     p_curves[i] = p_curve
-    #     if i == 0:
-    #         all_decision_dicts = {i: decision_dict}
-    #     else:
-    #         all_decision_dicts[i] = decision_dict
-    # df_decisions = pd.DataFrame(all_decision_dicts)
+    # unpack results
+    p_curves = np.zeros((n_trials, seq_len + 1))
+    reliabilities = np.zeros(n_trials)
+    print("Unpacking results...")
+    for i, (reliability, p_curve, decision_dict) in tqdm(enumerate(results)):
+        reliabilities[i] = reliability
+        p_curves[i] = p_curve
+        if i == 0:
+            all_decision_dicts = {i: decision_dict}
+        else:
+            all_decision_dicts[i] = decision_dict
+    df_decisions = pd.DataFrame(all_decision_dicts)
+    print(reliabilities)
 
-    # # save results
-    # # make a data folder
-    # data_dir = util.make_data_folder('figures/figure3b')
-    # # save the dataframe
-    # df_decisions.to_csv(f'{data_dir}/decision_dict.csv')
-    # np.save(f'{data_dir}/p_curves.npy', p_curves)
-    # np.save(f'{data_dir}/reliabilities.npy', reliabilities)
+    # save results
+    # make a data folder
+    data_dir = util.make_data_folder('figures/figure3b')
+    print(f"Saving results to {data_dir}...")
+    # save the dataframe
+    df_decisions.to_csv(f'{data_dir}/decision_dict.csv')
+    np.save(f'{data_dir}/p_curves.npy', p_curves)
+    np.save(f'{data_dir}/reliabilities.npy', reliabilities)
