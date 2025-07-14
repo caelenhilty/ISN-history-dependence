@@ -36,14 +36,9 @@ for i, (dur, amp) in tqdm(enumerate(zip(dur_flat, amp_flat)), total=len(dur_flat
     reliability = lrt.FSM_reliability(sequences, FSM)
     reliabilities[i] = reliability
 
-# count the number of reliabilities.npy in the figures/figure3 directory
-if Path('figures/figure3/reliabilities.npy').exists():
-    id = 1
-    while Path(f'figures/figure3/reliabilities_{id}.npy').exists():
-        id += 1
-    np.save(f'figures/figure3/reliabilities_{id}.npy', reliabilities)
-else:
-    np.save('figures/figure3/reliabilities.npy', reliabilities)
+# count the number of reliabilities.npy in the figures/figure6 directory
+data_dir = util.make_data_folder('figures/figure6')
+np.save(data_dir + '/reliabilities.npy', np.array(reliabilities))
 
 # quick plot of results
 fig, ax = plt.subplots(layout='constrained')

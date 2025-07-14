@@ -40,7 +40,7 @@ if __name__ == '__main__':
     with mp.Pool(mp.cpu_count()) as pool:
         reliabilities = pool.starmap(run_model, zip(dur_flat, amp_flat))
 
-    # count the number of reliabilities.npy in the figures/figure3 directory
+    # count the number of reliabilities.npy in the figures/figure6 directory
     data_dir = util.make_data_folder('figures/figure6')
     np.save(data_dir + '/reliabilities.npy', np.array(reliabilities))
 
