@@ -105,6 +105,7 @@ if __name__ == '__main__':
         else:
             all_decision_dicts[i] = decision_dict
     df_decisions = pd.DataFrame(all_decision_dicts)
+    print(np.histogram(reliabilities, bins=20))
 
     # save results
     # make a data folder
