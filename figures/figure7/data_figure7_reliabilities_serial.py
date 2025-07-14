@@ -37,7 +37,7 @@ for i, (dur, amp) in tqdm(enumerate(zip(dur_flat, amp_flat)), total=len(dur_flat
     reliabilities[i] = reliability
 
 # count the number of reliabilities.npy in the figures/figure6 directory
-data_dir = util.make_data_folder('figures/figure6')
+data_dir = util.make_data_folder('figures/figure7')
 np.save(data_dir + '/reliabilities.npy', np.array(reliabilities))
 
 # quick plot of results

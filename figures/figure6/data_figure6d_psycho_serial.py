@@ -84,7 +84,7 @@ for i in tqdm(range(n_trials)):
 df_decisions = pd.DataFrame(decision_dict)
 
 # make a data folder
-data_dir = util.make_data_folder('figures/figure7')
+data_dir = util.make_data_folder('figures/figure6')
 
 # save the dataframe
 df_decisions.to_csv(f'{data_dir}/decision_dict.csv')
