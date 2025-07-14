@@ -81,7 +81,7 @@ def encode_sequence(numPairs, pset, Wji, r0,
                     sigma_stim_ON_noise:float = 0, 
                     rng=np.random.default_rng(),
                     dt = 0.5e-3, return_timeseries=False,
-                    apply_to_E_and_I=False):
+                    apply_to_E_and_I=True):
 
     """ Uses the model to encode a sequence of stimuli and returns the final state of the network. 
     
@@ -156,7 +156,7 @@ def encode_sequence(numPairs, pset, Wji, r0,
 def make_FSM(numPairs, pset, Wji,
             stim_map, equil_duration,
             dt = 0.5e-3, return_states=False,
-            apply_to_I_and_E = False, raise_unstable = False):
+            apply_to_I_and_E = True, raise_unstable = False):
 
     # find r0 -- start from quiescence, see where it stabilizes
     test_duration = 6
