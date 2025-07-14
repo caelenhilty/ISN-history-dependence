@@ -38,16 +38,11 @@ def run_model(dur, amp):
 
 if __name__ == '__main__':
     with mp.Pool(mp.cpu_count()) as pool:
-        reliabilities = list(tqdm(pool.starmap(run_model, zip(dur_flat, amp_flat)), total=len(dur_flat)))
+        reliabilities = pool.starmap(run_model, zip(dur_flat, amp_flat))
 
     # count the number of reliabilities.npy in the figures/figure3 directory
-    if Path('figures/figure3/reliabilities.npy').exists():
-        id = 1
-        while Path(f'figures/figure3/reliabilities_{id}.npy').exists():
-            id += 1
-        np.save(f'figures/figure3/reliabilities_{id}.npy', reliabilities)
-    else:
-        np.save('figures/figure3/reliabilities.npy', reliabilities)
+    data_dir = util.make_data_folder('figures/figure6')
+    np.save(data_dir + '/reliabilities.npy', np.array(reliabilities))
 
     # quick plot of results
     fig, ax = plt.subplots(layout='constrained')

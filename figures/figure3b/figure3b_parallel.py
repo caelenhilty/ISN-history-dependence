@@ -18,8 +18,6 @@ seq_len = 6
 sequences = lrt.make_all_sequences(seq_len, ['L', 'R'])
 equil_duration = 2
 
-n_trials = 10
-
 def run_trial(i):
     rng = np.random.default_rng(i)
     
@@ -83,18 +81,9 @@ def run_trial(i):
 
 
 if __name__ == '__main__':
-    run_trial(0)  # burn one in
-
     import time as time
-    # test serial vs parallel
-    start_time = time.time()
-    reliabilities = []
-    for i in tqdm(range(n_trials)):
-        r, p, d = run_trial(i)
-        reliabilities.append(r)
-    serial_time = time.time() - start_time
-    print(reliabilities)
-    print(f"Serial Completed {n_trials} trials in {serial_time:.2f} seconds")
+
+    n_trials = 1000
 
     start_time = time.time()
     with mp.Pool(mp.cpu_count()) as pool:
@@ -102,7 +91,7 @@ if __name__ == '__main__':
     pool_time = time.time() - start_time
     pool.close()
     pool.join()
-    print(f"Parallel completed {n_trials} trials in {pool_time:.2f} seconds")
+    print(f"Completed {n_trials} trials in {pool_time:.2f} seconds")
 
     # unpack results
     p_curves = np.zeros((n_trials, seq_len + 1))
@@ -116,7 +105,6 @@ if __name__ == '__main__':
         else:
             all_decision_dicts[i] = decision_dict
     df_decisions = pd.DataFrame(all_decision_dicts)
-    print(reliabilities)
 
     # save results
     # make a data folder
