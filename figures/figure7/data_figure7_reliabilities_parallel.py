@@ -43,6 +43,8 @@ if __name__ == '__main__':
     with mp.Pool(mp.cpu_count()) as pool:
         reliabilities = np.array(pool.starmap(run_model, zip(dur_flat, amp_flat)))
     print(f"Completed in {time.time() - start:.2f} seconds.")
+    pool.close()
+    pool.join()
     
     # count the number of reliabilities.npy in the figures/figure6 directory
     data_dir = util.make_data_folder('figures/figure7')
