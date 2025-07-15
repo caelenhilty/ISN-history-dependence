@@ -20,3 +20,6 @@ mpl.rcParams.update({
 MIN_WIDTH = 1578    # in pixels at 600 dpi
 MAX_WIDTH = 4500
 MAX_HEIGHT = 5250
+
+inh_blue = "#7879ff"
+excit_red = '#F58E89'
