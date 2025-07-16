@@ -82,9 +82,14 @@ def run_trial(i, amp):
 
 if __name__ == '__main__':
     import time
+    
     n_kernels = 10
     kernel_ids = np.argsort(reliabilities)[-n_kernels:]
     amps = amp * np.logspace(-0.5, 0.5, 11)
+    kernel_mesh, amps_mesh = np.meshgrid(kernel_ids, amps)
+    kernel_ids = kernel_mesh.flatten()
+    amps = amps_mesh.flatten()
+
     print(f'Running {n_kernels * len(amps)} trials...')
     start = time.time()
     with mp.Pool(mp.cpu_count()) as pool:
