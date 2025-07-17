@@ -234,14 +234,15 @@ def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
     
     assert mean != 0, "Mean cannot be zero"
     assert std  >= 0, "Standard deviation must be non-negative"
-    assert mean_tol >= 0, "Mean tolerance must be non-negative"
-    assert std_tol >= 0, "Standard deviation tolerance must be non-negative"
+    
 
     if mean_tol is None:
         mean_tol = 0.05 * mean
     if std_tol is None:
         std_tol = 0.05 * std
-
+    assert mean_tol >= 0, "Mean tolerance must be non-negative"
+    assert std_tol >= 0, "Standard deviation tolerance must be non-negative"
+    
     if std == 0:
         Wji = np.ones((numPairs, numPairs)) * mean
         np.fill_diagonal(Wji, 0)
