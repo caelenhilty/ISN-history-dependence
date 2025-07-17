@@ -186,56 +186,9 @@ def getRNG() -> tuple:
     rng = np.random.default_rng(seed)   
     return rng, seed
 
-def makeWji(rng: np.random.default_rng, numPairs: float, meanStrength: float, stdStrength: float, timeout=np.inf) -> np.array:
-    """Create a random connection weight matrix for the network.
-    
-    Create a random (numPairs x numPairs) matrix for the network, with the weights being drawn from a normal distribution 
-    with mean meanStrength and standard deviation stdStrength. 
-    The diagonal is set to zero, and all values that don't match the sign of meanStrength are regenerated.
-    Regeneration means that the truncated normal distribution doesn't match the mean and standard deviation exactly.
-    
-    Parameters
-    ----------
-    rng : np.random.default_rng
-        The random number generator to use.
-    numPairs : int
-        The number of pairs in the network.
-    meanStrength : float
-        The target mean of the matrix.
-    stdStrength : float
-        The target standard deviation of the matrix.
-    timeout : float, default 0.5
-        Max time spent in normalization & sign enforcement loop before giving up
-    
-    """
-    Wji = rng.normal(meanStrength, stdStrength, (numPairs, numPairs))
-    # normalize
-    Wji = normalize_Wji(Wji, meanStrength, stdStrength)
-    t0 = time.time()
-    if meanStrength < 0:
-        # for all values that are greater than zero, regenerate those values until they are negative
-        while np.any(Wji > 0) and abs(time.time() - t0) <= timeout:
-            pos_vals = Wji > 0
-            Wji[pos_vals] = rng.normal(meanStrength, stdStrength, pos_vals.sum())
-            Wji = normalize_Wji(Wji, meanStrength, stdStrength)
-        if abs(time.time() - t0) > timeout:
-            pos_vals = Wji > 0
-            Wji[pos_vals] = meanStrength
-    elif meanStrength > 0:
-        # for all values that are less than zero, regenerate those values until they are positive
-        while np.any(Wji < 0) and abs(time.time() - t0) <= timeout:
-            neg_vals = Wji < 0
-            Wji[neg_vals] = rng.normal(meanStrength, stdStrength, neg_vals.sum())
-            Wji = normalize_Wji(Wji, meanStrength, stdStrength)
-        if abs(time.time() - t0) > timeout:
-            neg_vals = Wji < 0
-            Wji[neg_vals] = meanStrength
-    # make the diagonal zero
-    np.fill_diagonal(Wji, 0)
-    return Wji
-
-def makeWji_all_types(rng: np.random.default_rng, numPairs: float, meanStrengths: np.array, stdStrengths: np.array,
-                      timeout=np.inf) -> np.array:
+def makeWji_all_types(rng: np.random.default_rng, numPairs: float, 
+                      meanStrengths: np.array, stdStrengths: np.array,
+                      timeout=np.inf, mean_tol=None, std_tol=None, verbose=False) -> np.array:
     """ Create a random connection weight matrix for the network, 
     
     Parameters
@@ -269,83 +222,82 @@ def makeWji_all_types(rng: np.random.default_rng, numPairs: float, meanStrengths
     if meanStrengths.size != 4:
         raise ValueError("meanStrengths and stdStrengths must have 4 elements")
     
-    return np.array([makeWji(rng, numPairs, strength, std, timeout=timeout) for strength, std in zip(meanStrengths, stdStrengths)])
+    return np.array([make_Wji(rng, numPairs, strength, std, timeout=timeout,
+                             mean_tol=mean_tol, std_tol=std_tol, verbose=verbose) for strength, std in zip(meanStrengths, stdStrengths)])
 
-def normalize_Wji(Wji: np.array, mean: float, std: float) -> np.array:
-    """ Normalize the mean and standard devation of the connection weights to a given value.
-    
-    Parameters
-    ----------
-    Wji : np.array
-        The (numPairs x numPairs) matrix of connection weights between the pairs.
-    meanStrength : float
-        The desired mean of the connection weights.
-    
-    Returns
-    -------
-    np.array
-        The normalized connection weights.
+def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
+                 mean_tol = None, std_tol =None, timeout=np.inf, timeout_limit=10,
+                 verbose=False):
     """
-    # get current mean and std, ignoring diagonals
-    current_std = np.std(Wji[np.eye(Wji.shape[0], dtype=bool) == False])
-    current_mean = np.mean(Wji[np.eye(Wji.shape[0], dtype=bool) == False])
-    if current_std == 0:
-        Wji = (Wji - current_mean) + mean
+    
+    """
+    
+    assert mean != 0, "Mean cannot be zero"
+    assert std  >= 0, "Standard deviation must be non-negative"
+    assert mean_tol >= 0, "Mean tolerance must be non-negative"
+    assert std_tol >= 0, "Standard deviation tolerance must be non-negative"
+
+    if mean_tol is None:
+        mean_tol = 0.05 * mean
+    if std_tol is None:
+        std_tol = 0.05 * std
+
+    if std == 0:
+        Wji = np.ones((numPairs, numPairs)) * mean
+        np.fill_diagonal(Wji, 0)
         return Wji
-    Wji = (Wji - current_mean)/current_std * std + mean
-    # set diagonal to zero
-    np.fill_diagonal(Wji, 0)
-    return Wji
 
-def normalize_Wji_inputs(Wji: np.array, enforce_sign=True, timeout=np.inf) -> np.array:
-    """ Normalize each row of each Wji to have the same mean as the entire matrix.
+    sign = -1 if mean < 0 else 1
+    abs_mean = np.abs(mean)
 
-    Parameters
-    ----------
-    Wji : np.array
-        The (numPairs x numPairs) matrix of connection weights between the pairs.
-    enforce_sign : bool, default True
-        Whether to enforce that all values are the same sign as the mean of the matrix.
-    timeout : float, default np.inf
-        Max time spent in normalization & sign enforcement loop before giving up
-    
-    Returns
-    -------
-    np.array
-        The normalized connection weights.
-    """
-    assert Wji.ndim == 2, "Wji must be a 2D array"
-    mean = np.mean(Wji[np.eye(Wji.shape[0], dtype=bool) == False]) # mean of the entire matrix
-    Wji = _normalize_rows(Wji, mean)
-    # check that all values are the same sign as the mean
-    if enforce_sign:
-        t0 = time.time()
-        if mean < 0:
-            while np.any(Wji > 0) and abs(time.time() - t0) <= timeout:
-                pos_vals = Wji > 0
-                Wji[pos_vals] = -np.abs(Wji[pos_vals])
-                Wji = _normalize_rows(Wji, mean)
-            if abs(time.time() - t0) > timeout: # crude fix
-                pos_vals = Wji > 0
-                Wji[pos_vals] = mean
-        elif mean > 0:
-            while np.any(Wji < 0) and abs(time.time() - t0) <= timeout:
-                neg_vals = Wji < 0
-                Wji[neg_vals] = np.abs(Wji[neg_vals])
-                Wji = _normalize_rows(Wji, mean)
-            if abs(time.time() - t0) > timeout:
-                neg_vals = Wji < 0
-                Wji[neg_vals] = mean
-            
-    return Wji
+    mu_log = np.log(abs_mean**2 / np.sqrt(std**2 + abs_mean**2))
+    sigma_log = np.sqrt(np.log(1 + (std**2 / abs_mean**2)))
+    Wji = _log_normal_helper(rng, numPairs, mu_log, sigma_log, abs_mean, mean_tol, timeout)
+    # now enforce std
+    get_whole_std = lambda Wji: np.std(Wji[np.eye(Wji.shape[0], dtype=bool) == False])
+    timeouts = 0
+    tries = 0
+    closest = np.inf
+    while np.abs(get_whole_std(Wji) - std) > std_tol:
+        try:
+            std_boost = tries * 1e-6 * std # small boost to sigma to help convergence
+            # helps a lot for higher stds, where we need 
+            # to get samples from the tail to match the mean and std simultaneously
 
-def _normalize_rows(Wji, mean):
-    """ a helper function for normalize_Wji_inputs """
-    row_means = np.mean(Wji[np.eye(Wji.shape[0], dtype=bool) == False].reshape((Wji.shape[0], Wji.shape[1]-1)), axis=1) # mean of each row
-    for i in range(Wji.shape[0]):
-        # normalize each row to have the same mean as the entire matrix
-        Wji[i, :] = Wji[i, :] - row_means[i] + mean
-    np.fill_diagonal(Wji, 0)
+            # recompute log-normal parameters
+            mu_log = np.log(abs_mean**2 / np.sqrt((std + std_boost)**2 + abs_mean**2))
+            sigma_log = np.sqrt(np.log(1 + ((std + std_boost)**2 / abs_mean**2)))
+            Wji = _log_normal_helper(rng, numPairs, mu_log, sigma_log, abs_mean, mean_tol, timeout)
+            tries += 1
+            current_std = get_whole_std(Wji)
+            if np.abs(current_std - std) < closest:
+                closest = np.abs(current_std - std)
+            if verbose and tries%1000==0: print(f"Retry {tries}: closest = {closest:.3f}, target = {std:.3f} ", end='\r')
+        except TimeoutError:
+            timeouts += 1
+            if timeouts > timeout_limit:
+                raise TimeoutError(f"Timeout count exceeded while generating Wji with mean {mean} and std {std}")
+            continue
+    if verbose: print()
+    return Wji * sign
+
+def _log_normal_helper(rng, numPairs, mu, sigma, mean, mean_tol, timeout=np.inf):
+    """Generates an array where each row has the desired mean"""
+    Wji = np.zeros((numPairs, numPairs))
+    for i in range(numPairs):
+        start_time = time.time()
+        curr_time = start_time
+        values = rng.lognormal(mu, sigma, numPairs-1)
+        current_mean = np.mean(values)
+        while abs(current_mean - mean) > mean_tol and \
+                abs(curr_time - start_time) < timeout:
+            values = rng.lognormal(mu, sigma, numPairs-1)
+            current_mean = np.mean(values)
+            curr_time = time.time()
+        if np.abs(current_mean - mean) <= mean_tol:
+            Wji[i] = np.insert(values, i, 0)  # Insert zero on the diagonal
+        if abs(curr_time - start_time) >= timeout:
+            raise TimeoutError(f"Timeout exceeded while generating Wji with mean {mean} and std {sigma}")
     return Wji
 
 @njit(cache=True)
