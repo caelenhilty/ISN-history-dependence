@@ -139,10 +139,6 @@ def pack_parameters(tauE: float, tauI: float, tauDE: float, tauDI: float, tauSE:
         Threshold of the excitatory unit
     thetaI : float
         Threshold of the inhibitory unit
-    IappI : np.array
-        Applied current to the inhibitory unit
-    IappE : np.array
-        Applied current to the excitatory unit
         
     Returns
     -------
@@ -242,7 +238,7 @@ def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
         std_tol = 0.05 * std
     assert mean_tol >= 0, "Mean tolerance must be non-negative"
     assert std_tol >= 0, "Standard deviation tolerance must be non-negative"
-    
+
     if std == 0:
         Wji = np.ones((numPairs, numPairs)) * mean
         np.fill_diagonal(Wji, 0)

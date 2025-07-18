@@ -59,7 +59,7 @@ def load_fiducial_network(in_figure_folder:bool=False):
 
     return Wji, pset, amp, dur, l_kernel, r_kernel
 
-def make_data_folder(path:str):
+def make_data_folder(path:str, name:str='data'):
     """
     Create a directory if it does not already exist.
     
@@ -75,14 +75,14 @@ def make_data_folder(path:str):
     """
     from pathlib import Path
 
-    if Path(path + f'/data').exists():
+    if Path(path + f'/{name}').exists():
         id = 1
         while Path(f'_{id}').exists():
             id += 1
-        data_dir = path + f'/data_{id}'
+        data_dir = path + f'/{name}_{id}'
         Path(data_dir).mkdir(parents=True, exist_ok=True)
     else:
-        data_dir = path + '/data'
+        data_dir = path + f'/{name}'
         Path(data_dir).mkdir(parents=True, exist_ok=True)
     return data_dir
 
