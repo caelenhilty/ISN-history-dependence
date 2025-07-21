@@ -102,9 +102,9 @@ def run_trial(i, trial_duration=6, timing=0.5):
             on_to_off = bistable_no_depression(pset, timing, dur, amp, trial_duration, 1e-5, initial_conditions=[rE_target, rI_target])
     
             # check stability of all nodes
-            stably_on = np.all(off_to_on[0][int(trial_duration-1):-1] - rE_target < 0.1)
-            stably_off = np.all(on_to_off[0][int(trial_duration-1):-1] < 0.1)
-            
+            stably_on = np.all(np.abs(off_to_on[0][int((trial_duration-1)/dt):-1] - rE_target) < 0.1)
+            stably_off = np.all(np.abs(on_to_off[0][int((trial_duration-1)/dt):-1] - rE_target) < 0.1)
+
             if stably_on and stably_off:
                 amp_dur_pairs.append((amp, dur))
 
