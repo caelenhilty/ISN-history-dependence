@@ -103,7 +103,7 @@ def run_trial(i, trial_duration=6, timing=0.5):
     
             # check stability of all nodes
             stably_on = np.all(np.abs(off_to_on[0][int((trial_duration-1)/dt):-1] - rE_target) < 0.1)
-            stably_off = np.all(np.abs(on_to_off[0][int((trial_duration-1)/dt):-1] - rE_target) < 0.1)
+            stably_off = np.all(np.abs(on_to_off[0][int((trial_duration-1)/dt):-1]) < 0.1)
 
             if stably_on and stably_off:
                 amp_dur_pairs.append((amp, dur))
@@ -118,14 +118,10 @@ if __name__ == "__main__":
     n_psets = 1000
     n_amp = 20
     n_dur = 20
-    results = []
-    for i in tqdm(range(n_psets)):
-        results.append(run_trial(i))
+    results = []    
+    with mp.Pool(mp.cpu_count()) as pool:
+        results = pool.map(run_trial, range(n_psets))
         
-    # unpack results
-    psets = []
-    amp_durs = []
-            
     # set up csv
     import csv
     fname = f'data.csv'
