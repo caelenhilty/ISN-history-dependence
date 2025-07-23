@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import multiprocessing as mp
 
 import sys
@@ -14,9 +13,9 @@ Wji, pset, amp, dur, l_kernel, r_kernel = util.load_fiducial_network()
 # calculate means of Wji, ignoring the diagonal
 Wji_means = [np.mean(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
 
-data_dir = 'figures/figure8/data'
+data_dir = 'figures/figure8/data_1'
 output_dir = util.make_data_folder(data_dir, name='raw_reliabilities')
-CVs = np.logspace(-2, 0, 5)
+CVs = np.logspace(-0.25, 0.25, 3)
 
 # task parameters
 numPairs = 5
@@ -27,7 +26,9 @@ equil_duration = 2
 
 # universal parameter sweep
 n = 3
-amp_range = np.logspace(np.log10(7.39), 2, n) # 7.39 is thetaE -- need to turn it on to get a response
+amp_min = max(min(pset[-2]/np.max(l_kernel), pset[-2]/np.max(r_kernel)), 1)  # pset[-2] is thetaE -- need to turn E on to get a response
+# amp_min is chosen so that at least one cue could elicit a response
+amp_range = np.logspace(np.log10(amp_min), 2, n)
 dur_range = np.linspace(0, 0.05, n)
 dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration on x-axis
 dur_flat, amp_flat = dur_mesh.ravel(), amp_mesh.ravel()
@@ -65,5 +66,10 @@ if __name__ == "__main__":
     n_networks = 10  # number of networks per CV
     for CV in CVs:
         os.makedirs(Path(output_dir + f'/CV_{CV:.2f}'), exist_ok=True)
-        for i in range(n_networks):  # run 10 networks for each CV
+        for i in range(n_networks):  # run n_networks for each CV
             run_sweep(CV, i)
+    
+    # also run for CV = 0.00
+    os.makedirs(Path(output_dir + '/CV_0.00'), exist_ok=True)
+    run_sweep(0.0, 1)  # only one network for CV = 0.00
+
