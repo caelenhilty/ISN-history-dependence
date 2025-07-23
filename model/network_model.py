@@ -103,7 +103,6 @@ def simulateISP(dt: float, duration: float, rmax: float,
 
 
 # ------------------ Size-N Network ------------------ #
-@njit
 def pack_parameters(tauE: float, tauI: float, tauDE: float, tauDI: float, tauSE: float, tauSI: float,
             pr: float, alpha0: float,
             WEE: float, WEI: float, WIE: float, WII: float, thetaE: float, thetaI: float
@@ -149,7 +148,6 @@ def pack_parameters(tauE: float, tauI: float, tauDE: float, tauDI: float, tauSE:
     """
     return np.array([tauE, tauI, tauDE, tauDI, tauSE, tauSI, pr, alpha0, WEE, WEI, WIE, WII, thetaE, thetaI], dtype=np.float64)
 
-@njit
 def unpack_parameters(pset: np.array) -> tuple:
     """ Unpack network parameters from a numpy array
     
