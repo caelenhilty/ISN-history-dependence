@@ -54,7 +54,7 @@ def get_solution(target: callable, maxiter:int=100, **kwargs):
 
 # construct random pset
 def generate_valid_pset(i):
-    rng = np.random.default_rng(i)
+    rng = np.random.default_rng()
     
     valid = 0 # bit tracks if pset satisfies constraints
     while not valid:
@@ -90,10 +90,10 @@ def bistable_no_depression(pset, stimulus_timing, stimulus_duration, stimulus_am
     
     return rE, rI
 
-def run_trial(i, trial_duration=6, timing=0.5):
+def run_trial(i, trial_duration=6, timing=0.5, n_dur=20, n_amp=20):
     pset = generate_valid_pset(i)
     stim_dur_range = np.logspace(-3, -1, n_dur).round(5)
-    stim_amp_range = np.logspace(np.log(pset[0] + 1), 2, n_amp).round(2)
+    stim_amp_range = np.logspace(np.log10(pset[-2]), 2, n_amp).round(2)
     amp_dur_pairs = []
     
     for amp in stim_amp_range:
@@ -103,7 +103,7 @@ def run_trial(i, trial_duration=6, timing=0.5):
     
             # check stability of all nodes
             stably_on = np.all(np.abs(off_to_on[0][int((trial_duration-1)/dt):-1] - rE_target) < 0.1)
-            stably_off = np.all(np.abs(on_to_off[0][int((trial_duration-1)/dt):-1]) < 0.1)
+            stably_off = np.all(on_to_off[0][int((trial_duration-1)/dt):-1] < 0.1)
 
             if stably_on and stably_off:
                 amp_dur_pairs.append((amp, dur))
@@ -118,17 +118,14 @@ if __name__ == "__main__":
     n_psets = 1000
     n_amp = 20
     n_dur = 20
-    results = []    
+    print(f"Running {n_psets * n_amp * n_dur} trials with {mp.cpu_count()} cores...")
     with mp.Pool(mp.cpu_count()) as pool:
         results = pool.map(run_trial, range(n_psets))
         
-    # set up csv
-    import csv
-    fname = f'data.csv'
-    header = ['pset', 'amp-dur']
-    with open(fname, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        for (pset, pairs) in results:
-            if pairs:
-                writer.writerow({'pset':pset, 'amp-dur':pairs})
+    # save results
+    results = [res for res in results if len(res[1]) > 0]
+    psets, amp_dur_pairs = zip(*results)
+    psets = np.array(psets)
+    amp_dur_pairs = [np.array(pairs) for pairs in amp_dur_pairs]
+    np.save("figures/RSO_figure1/psets.npy", psets)
+    np.save("figures/RSO_figure1/amp_dur_pairs.npy", amp_dur_pairs)

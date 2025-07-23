@@ -1,3 +1,4 @@
+from operator import ge
 from numba import prange, njit, vectorize, float64
 import numpy as np
 from os import urandom
@@ -253,23 +254,27 @@ def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
     # now enforce std
     get_whole_std = lambda Wji: np.std(Wji[np.eye(Wji.shape[0], dtype=bool) == False])
     timeouts = 0
+    d_closest = np.inf
+    closest_val = get_whole_std(Wji)
+    std_boost = 0
     tries = 0
-    closest = np.inf
     while np.abs(get_whole_std(Wji) - std) > std_tol:
         try:
-            std_boost = tries * 1e-6 * std # small boost to sigma to help convergence
-            # helps a lot for higher stds, where we need 
-            # to get samples from the tail to match the mean and std simultaneously
+            std_boost += 1e-3 * std * np.sign(std - get_whole_std(Wji)) 
+            # small boost to sigma to help convergence: if sample std is too low, we need to increase it a bit
+            # if std is too high, we need to decrease it a bit
+            # helps a lot for higher stds, where we need to get samples from the tail to match the mean and std simultaneously
 
             # recompute log-normal parameters
-            mu_log = np.log(abs_mean**2 / np.sqrt((std + std_boost)**2 + abs_mean**2))
-            sigma_log = np.sqrt(np.log(1 + ((std + std_boost)**2 / abs_mean**2)))
+            mu_log = np.log(abs_mean**2 / np.sqrt(max(std + std_boost, 1e-10)**2 + abs_mean**2))
+            sigma_log = np.sqrt(np.log(1 + (max(std + std_boost, 1e-10)**2 / abs_mean**2)))
             Wji = _log_normal_helper(rng, numPairs, mu_log, sigma_log, abs_mean, mean_tol, timeout)
             tries += 1
             current_std = get_whole_std(Wji)
-            if np.abs(current_std - std) < closest:
-                closest = np.abs(current_std - std)
-            if verbose and tries%1000==0: print(f"Retry {tries}: closest = {closest:.3f}, target = {std:.3f} ", end='\r')
+            if np.abs(current_std - std) < d_closest:
+                d_closest = np.abs(current_std - std)
+                closest_val = current_std
+            if verbose and tries%1000==0: print(f"Retry {tries}: closest = {closest_val:.3f}, target = {std:.3f}, boost = {std_boost:.5f}", end='\r')
         except TimeoutError:
             timeouts += 1
             if timeouts > timeout_limit:

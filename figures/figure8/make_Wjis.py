@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import multiprocessing as mp
+import time as time
 
 import sys
 import os
@@ -14,26 +15,34 @@ Wji, pset, amp, dur, l_kernel, r_kernel = util.load_fiducial_network()
 # calculate means of Wji, ignoring the diagonal
 Wji_means = [np.mean(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
 
-# set up parameter sweep
-CVs = np.logspace(-2, 0, 5)
 numPairs = 5  # number of pairs of neurons in the network
 
-def make_Wji_wrapper(CV, n_networks=10):
+def make_Wji_wrapper(CV):
+    print(f"Generating Wji with CV={CV:.2f}")
     rng = np.random.default_rng()
     stds = [mean * CV for mean in Wji_means]
-    Wjis = [network_model.makeWji_all_types(rng, numPairs, np.array(Wji_means), np.array(stds),
-                                           timeout=np.inf) for _ in range(n_networks)]
-    return Wjis
+    start = time.time()
+    Wji = network_model.makeWji_all_types(rng, numPairs, np.array(Wji_means), np.array(stds))
+    print(f"Finished Wji with CV={CV:.2f} in {time.time() - start:.3f} seconds")
+    return Wji
+
 if __name__ == "__main__":
-    with mp.Pool(min(mp.cpu_count(), 10)) as pool:
+    # set up parameter sweep
+    CVs = np.logspace(-0.25, 0.25, 3)
+    # add zero to the front of the CVs for the zero-variance case
+    CVs = np.insert(CVs, 0, 0.0)  # zero-variance case
+    # repeat n_networks times
+    n_networks = 10
+    CVs = np.repeat(CVs, n_networks)
+    
+    with mp.Pool(mp.cpu_count()) as pool:
         results = pool.map(make_Wji_wrapper, CVs)
     pool.close()
     pool.join()
 
     # Save the results
     data_dir = util.make_data_folder("figures/figure8")
-    for i, CV in enumerate(CVs):
-        Wjis = results[i]
+    for i, CV in enumerate(np.unique(CVs)):
         os.makedirs(data_dir + f'/CV_{CV:.2f}', exist_ok=True)
-        for j, Wji in enumerate(Wjis):
+        for j, Wji in enumerate(results[i * n_networks : (i + 1) * n_networks]):
             np.save(data_dir + f'/CV_{CV:.2f}/Wji_{j+1}.npy', Wji, allow_pickle=True)
