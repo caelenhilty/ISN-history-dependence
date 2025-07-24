@@ -70,11 +70,63 @@ for i, (tr, det) in enumerate(tqdm(zip(trace_mesh_, determinant_mesh_), total=tr
 try:
     assert np.sum(np.isnan(WEE_mesh)) == 0
 except AssertionError:
-    # plot WEE mesh
+    print("Warning: NaN values found in parameter mesh.")
+    
+    
+def trial(stim_amp, stim_dur):
+    rE, rI = bistable_no_depression(stim_dur, stim_amp, 
+                                            dt, max_duration,
+                                            WEE, WEI, WIE, WII, thetaE, thetaI)
+    if np.any(rE < 0) or rE[-1] == 100 or rI[-1] == 100: # if not stable, go to next stimulus
+        return 0
+    on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
+    # run again
+    if on:
+        rE, rI = bistable_no_depression(stim_dur, stim_amp, 
+                                        dt, max_duration,
+                                        WEE, WEI, WIE, WII, thetaE, thetaI, 
+                                        initial_conditions=[rE[-1], rI[-1]])
+        if np.any(rE < 0): # if not stable, go to next stimulus
+            return 0
+        on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
+        if not on:
+            return 1
+
+# inner loop over stimulus parameters
+m = 50
+stimulus_durations = np.logspace(-3, 0, m)
+stimulus_amplitudes = np.logspace(0, 2, m)
+STIM_DUR, STIM_AMP = np.meshgrid(stimulus_durations, stimulus_amplitudes)
+STIM_DUR_, STIM_AMP_ = STIM_DUR.ravel(), STIM_AMP.ravel()
+if __name__ == '__main__':
+    for i, (WEE, WEI, WIE, WII) in enumerate(tqdm(zip(WEE_mesh, WEI_mesh, WIE_mesh, WII_mesh), total=WEE_mesh.size, mininterval=1)):
+        if np.isnan(WEE):
+            continue
+        with mp.Pool(mp.cpu_count()) as pool:
+            results = pool.starmap(trial, zip(STIM_AMP_, STIM_DUR_))
+        areas[i] = np.sum(results)
+
+    # save data
+    data_dir = util.make_data_folder('figures/figure2', name='trace_vs_det')
+    np.save(data_dir + '/WEE_mesh.npy', WEE_mesh)
+    np.save(data_dir + '/WEI_mesh.npy', WEI_mesh)
+    np.save(data_dir + '/WIE_mesh.npy', WIE_mesh)
+    np.save(data_dir + '/WII_mesh.npy', WII_mesh)
+    np.save(data_dir + '/areas.npy', areas)
+
+    # compute tolerance
+    areas = areas/(m**2)
+    Lx = np.max(determinants) - np.min(determinants)
+    Ly = np.max(traces) - np.min(traces)
+    log_radius = np.sqrt(areas * Lx * Ly / np.pi)
+    tolerances = 10**(log_radius) 
+    # reports fold-change in parameter space, assuming a circular area
+
+    # plot areas vs determinants and traces
     fig, ax = plt.subplots(1, 1, figsize=(8, 6), layout='tight')
-    im = ax.pcolormesh(determinant_mesh, trace_mesh, WEE_mesh.reshape(trace_mesh.shape), cmap='viridis')
-    ax.set_xscale('symlog')
-    ax.set_yscale('symlog')
+    im = ax.pcolormesh(determinant_mesh, trace_mesh, tolerances.reshape(trace_mesh.shape), cmap='viridis')
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label('Tolerance (%)')
     # add line where tr**2 = 4*det
     det_line = determinants[:]
     trace_line = -2*np.sqrt(det_line)
@@ -83,69 +135,9 @@ except AssertionError:
     det_line = det_line[idx_min:idx_max]
     trace_line = trace_line[idx_min:idx_max]
     ax.plot(det_line, trace_line, 'r--', label=r'$tr^2 = 4 \cdot det$')
-    plt.show()
-
-# inner loop over stimulus parameters
-m = 50
-stimulus_durations = np.logspace(-3, 0, m)
-stimulus_amplitudes = np.logspace(0, 2, m)
-STIM_DUR, STIM_AMP = np.meshgrid(stimulus_durations, stimulus_amplitudes)
-STIM_DUR_, STIM_AMP_ = STIM_DUR.ravel(), STIM_AMP.ravel()
-
-for i, (WEE, WEI, WIE, WII) in enumerate(tqdm(zip(WEE_mesh, WEI_mesh, WIE_mesh, WII_mesh), total=WEE_mesh.size, mininterval=1)):
-    if np.isnan(WEE):
-        continue
-    for j, (stim_dur, stim_amp) in enumerate(zip(STIM_DUR_, STIM_AMP_)):
-        rE, rI = bistable_no_depression(stim_dur, stim_amp, 
-                                        dt, max_duration,
-                                        WEE, WEI, WIE, WII, thetaE, thetaI)
-        if np.any(rE < 0) or rE[-1] == 100 or rI[-1] == 100: # if not stable, go to next stimulus
-            continue
-        on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
-        # run again
-        if on:
-            rE, rI = bistable_no_depression(stim_dur, stim_amp, 
-                                            dt, max_duration,
-                                            WEE, WEI, WIE, WII, thetaE, thetaI, 
-                                            initial_conditions=[rE[-1], rI[-1]])
-            if np.any(rE < 0): # if not stable, go to next stimulus
-                continue
-            on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
-            if not on:
-                areas[i] += 1
-
-# save data
-data_dir = util.make_data_folder('figures/figure2', name='trace_vs_det')
-np.save(data_dir + '/WEE_mesh.npy', WEE_mesh)
-np.save(data_dir + '/WEI_mesh.npy', WEI_mesh)
-np.save(data_dir + '/WIE_mesh.npy', WIE_mesh)
-np.save(data_dir + '/WII_mesh.npy', WII_mesh)
-np.save(data_dir + '/areas.npy', areas)
-
-# compute tolerance
-areas = areas/(m**2)
-Lx = np.max(determinants) - np.min(determinants)
-Ly = np.max(traces) - np.min(traces)
-log_radius = np.sqrt(areas * Lx * Ly / np.pi)
-tolerances = 10**(log_radius) 
-# reports fold-change in parameter space, assuming a circular area
-
-# plot areas vs determinants and traces
-fig, ax = plt.subplots(1, 1, figsize=(8, 6), layout='tight')
-im = ax.pcolormesh(determinant_mesh, trace_mesh, tolerances.reshape(trace_mesh.shape), cmap='viridis')
-cbar = fig.colorbar(im, ax=ax)
-cbar.set_label('Tolerance (%)')
-# add line where tr**2 = 4*det
-det_line = determinants[:]
-trace_line = -2*np.sqrt(det_line)
-idx_max = np.argmax(trace_line < np.min(traces)) if np.min(trace_line) < np.min(traces) else -1
-idx_min = np.argmax(trace_line > np.max(traces)) if np.max(trace_line) > np.max(traces) else 0
-det_line = det_line[idx_min:idx_max]
-trace_line = trace_line[idx_min:idx_max]
-ax.plot(det_line, trace_line, 'r--', label=r'$tr^2 = 4 \cdot det$')
-# axis scaling
-ax.set_xscale('symlog')
-ax.set_yscale('symlog')
-ax.set(ylabel=r'Trace', xlabel=r'Determinant $\Delta$')
-ax.legend()
-fig.savefig(data_dir + '/figure2.png')
+    # axis scaling
+    ax.set_xscale('symlog')
+    ax.set_yscale('symlog')
+    ax.set(ylabel=r'Trace', xlabel=r'Determinant $\Delta$')
+    ax.legend()
+    fig.savefig(data_dir + '/figure2.png')
