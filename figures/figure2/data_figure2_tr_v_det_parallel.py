@@ -23,8 +23,7 @@ dt = 1e-5
 def bistable_no_depression(stimulus_duration, stimulus_amplitude, 
                            dt, max_duration:int,
                            WEE, WEI, WIE, WII, thetaE, thetaI, tauE=10e-3, tauI=10e-3,
-                           initial_conditions=[0, 0], step=1):
-    
+                           initial_conditions=[0, 0]):
     duration = max_duration
     rmax = 100
     total_duration = duration + stimulus_duration + 1 # 1 second of equilibration pre-stimulus
@@ -38,42 +37,14 @@ def bistable_no_depression(stimulus_duration, stimulus_amplitude,
                             WEE, WEI, WIE, WII, thetaE, thetaI,
                             IappI, IappE, rE0=initial_conditions[0], rI0=initial_conditions[1])   
     # check stability
-    stable = np.abs(rE[-1]-rE[(int(-0.1/dt))]) < 0.1 and np.abs(rE[-1]-rE[(int((-0.05)/dt))]) < 0.1 \
-        and np.abs(rE[-1]-rE[(int((-0.075)/dt))]) < 0.1
+    stable = np.allclose(rE[int((max_duration - 0.1)/dt):], rE[-1], atol=0.1, rtol=0)
     
     if not stable: # flag as unstable with negative values
         rE *= -1
         rI *= -1
-    return rE, rI
-
-# outer loop over parameters
-n = 30
-traces = np.logspace(0, 5, n) * -1
-determinants = np.logspace(5, 7, n)
-trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
-trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
-areas = np.zeros_like(trace_mesh_)
-
-WEE_mesh = np.zeros_like(trace_mesh_)
-WEI_mesh = np.zeros_like(trace_mesh_)
-WIE_mesh = np.zeros_like(trace_mesh_)
-WII_mesh = np.zeros_like(trace_mesh_)
-for i, (tr, det) in enumerate(tqdm(zip(trace_mesh_, determinant_mesh_), total=trace_mesh_.size, mininterval=1)):
-    target = util.make_target(rE_target, rI_target, tr, det, thetaE, thetaI)
-    x, valid = util.get_solution(target, method='hybr')
-    if valid:
-        WEE_mesh[i], WEI_mesh[i], WIE_mesh[i], WII_mesh[i] = x
-    else:
-        WEE_mesh[i], WEI_mesh[i], WIE_mesh[i], WII_mesh[i] = np.nan, np.nan, np.nan, np.nan
-        
-# count nan values
-try:
-    assert np.sum(np.isnan(WEE_mesh)) == 0
-except AssertionError:
-    print("Warning: NaN values found in parameter mesh.")
+    return rE, rI    
     
-    
-def trial(stim_amp, stim_dur):
+def trial(stim_amp, stim_dur, WEE, WEI, WIE, WII):
     rE, rI = bistable_no_depression(stim_dur, stim_amp, 
                                             dt, max_duration,
                                             WEE, WEI, WIE, WII, thetaE, thetaI)
@@ -91,19 +62,49 @@ def trial(stim_amp, stim_dur):
         on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
         if not on:
             return 1
+    return 0
 
-# inner loop over stimulus parameters
-m = 50
-stimulus_durations = np.logspace(-3, 0, m)
-stimulus_amplitudes = np.logspace(0, 2, m)
-STIM_DUR, STIM_AMP = np.meshgrid(stimulus_durations, stimulus_amplitudes)
-STIM_DUR_, STIM_AMP_ = STIM_DUR.ravel(), STIM_AMP.ravel()
 if __name__ == '__main__':
+    # outer loop over parameters
+    n = 30
+    traces = np.logspace(0, 5, n) * -1
+    determinants = np.logspace(5, 7, n)
+    trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
+    trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
+    areas = np.zeros_like(trace_mesh_)
+
+    WEE_mesh = np.zeros_like(trace_mesh_)
+    WEI_mesh = np.zeros_like(trace_mesh_)
+    WIE_mesh = np.zeros_like(trace_mesh_)
+    WII_mesh = np.zeros_like(trace_mesh_)
+    for i, (tr, det) in enumerate(tqdm(zip(trace_mesh_, determinant_mesh_), total=trace_mesh_.size, mininterval=1)):
+        target = util.make_target(rE_target, rI_target, tr, det, thetaE, thetaI)
+        x, valid = util.get_solution(target, method='hybr')
+        if valid:
+            WEE_mesh[i], WEI_mesh[i], WIE_mesh[i], WII_mesh[i] = x
+        else:
+            WEE_mesh[i], WEI_mesh[i], WIE_mesh[i], WII_mesh[i] = np.nan, np.nan, np.nan, np.nan
+            
+    # count nan values
+    try:
+        assert np.sum(np.isnan(WEE_mesh)) == 0
+    except AssertionError:
+        print("Warning: NaN values found in parameter mesh.")
+        
+    # inner loop over stimulus parameters
+    m = 50
+    stimulus_durations = np.logspace(-3, 0, m)
+    stimulus_amplitudes = np.logspace(0, 2, m)
+    STIM_DUR, STIM_AMP = np.meshgrid(stimulus_durations, stimulus_amplitudes)
+    STIM_DUR_, STIM_AMP_ = STIM_DUR.ravel(), STIM_AMP.ravel()
+    
     for i, (WEE, WEI, WIE, WII) in enumerate(tqdm(zip(WEE_mesh, WEI_mesh, WIE_mesh, WII_mesh), total=WEE_mesh.size, mininterval=1)):
         if np.isnan(WEE):
             continue
         with mp.Pool(mp.cpu_count()) as pool:
-            results = pool.starmap(trial, zip(STIM_AMP_, STIM_DUR_))
+            results = pool.starmap(trial, zip(STIM_AMP_, STIM_DUR_, 
+                                               [WEE]*(m**2), [WEI]*(m**2), 
+                                               [WIE]*(m**2), [WII]*(m**2)))
         areas[i] = np.sum(results)
 
     # save data
