@@ -65,11 +65,15 @@ def trial(stim_amp, stim_dur, WEE, WEI, WIE, WII):
     return 0
 
 if __name__ == '__main__':
-    areas = np.load('figures/figure2/trace_vs_det/areas.npy', allow_pickle=True)
+    n = 30
     WEE_mesh = np.load('figures/figure2/trace_vs_det/WEE_mesh.npy', allow_pickle=True)
     WEI_mesh = np.load('figures/figure2/trace_vs_det/WEI_mesh.npy', allow_pickle=True)
     WIE_mesh = np.load('figures/figure2/trace_vs_det/WIE_mesh.npy', allow_pickle=True)
     WII_mesh = np.load('figures/figure2/trace_vs_det/WII_mesh.npy', allow_pickle=True)
+    WEE_mesh = WEE_mesh.reshape((n, n))
+    WEI_mesh = WEI_mesh.reshape((n, n))
+    WIE_mesh = WIE_mesh.reshape((n, n))
+    WII_mesh = WII_mesh.reshape((n, n))
     
     # outer loop over selected points
     selected_points = [(1, 3), (6, 8),(5, 20)]
