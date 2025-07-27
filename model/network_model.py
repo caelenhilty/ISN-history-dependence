@@ -148,6 +148,7 @@ def pack_parameters(tauE: float, tauI: float, tauDE: float, tauDI: float, tauSE:
     """
     return np.array([tauE, tauI, tauDE, tauDI, tauSE, tauSI, pr, alpha0, WEE, WEI, WIE, WII, thetaE, thetaI], dtype=np.float64)
 
+@njit
 def unpack_parameters(pset: np.array) -> tuple:
     """ Unpack network parameters from a numpy array
     
