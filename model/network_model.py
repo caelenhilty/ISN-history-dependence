@@ -185,7 +185,8 @@ def getRNG() -> tuple:
 
 def makeWji_all_types(rng: np.random.default_rng, numPairs: float, 
                       meanStrengths: np.array, stdStrengths: np.array,
-                      timeout=np.inf, mean_tol=None, std_tol=None, verbose=False) -> np.array:
+                      timeout=np.inf, mean_tol=None, std_tol=None, verbose=False,
+                      timeout_limit=np.inf) -> np.array:
     """ Create a random connection weight matrix for the network, 
     
     Parameters
@@ -220,10 +221,10 @@ def makeWji_all_types(rng: np.random.default_rng, numPairs: float,
         raise ValueError("meanStrengths and stdStrengths must have 4 elements")
     
     return np.array([make_Wji(rng, numPairs, strength, std, timeout=timeout,
-                             mean_tol=mean_tol, std_tol=std_tol, verbose=verbose) for strength, std in zip(meanStrengths, stdStrengths)])
+                             mean_tol=mean_tol, std_tol=std_tol, verbose=verbose, timeout_limit=timeout_limit) for strength, std in zip(meanStrengths, stdStrengths)])
 
 def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
-                 mean_tol = None, std_tol =None, timeout=np.inf, timeout_limit=10,
+                 mean_tol = None, std_tol =None, timeout=np.inf, timeout_limit=np.inf,
                  verbose=False):
     """
     
@@ -235,8 +236,12 @@ def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
 
     if mean_tol is None:
         mean_tol = 0.05 * mean
+    else:
+        mean_tol = mean_tol * mean # convert to absolute
     if std_tol is None:
         std_tol = 0.05 * std
+    else:
+        std_tol = std_tol * std
     assert mean_tol >= 0, "Mean tolerance must be non-negative"
     assert std_tol >= 0, "Standard deviation tolerance must be non-negative"
 

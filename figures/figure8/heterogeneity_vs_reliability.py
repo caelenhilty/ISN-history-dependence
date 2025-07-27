@@ -25,7 +25,7 @@ sequences = lrt.make_all_sequences(seq_len, ['L', 'R'])
 equil_duration = 2
 
 # universal parameter sweep
-n = 3
+n = 20
 amp_min = max(min(pset[-2]/np.max(l_kernel), pset[-2]/np.max(r_kernel)), 1)  # pset[-2] is thetaE -- need to turn E on to get a response
 # amp_min is chosen so that at least one cue could elicit a response
 amp_range = np.logspace(np.log10(amp_min), 2, n)

@@ -22,8 +22,9 @@ def make_Wji_wrapper(CV):
     rng = np.random.default_rng()
     stds = [mean * CV for mean in Wji_means]
     start = time.time()
-    Wji = network_model.makeWji_all_types(rng, numPairs, np.array(Wji_means), np.array(stds), verbose=True)
+    Wji = network_model.makeWji_all_types(rng, numPairs, np.array(Wji_means), np.array(stds), verbose=True,
+                                          std_tol=0.1)
     print(f"Finished Wji with CV={CV:.2f} in {time.time() - start:.2f} seconds")
     return Wji
 
-make_Wji_wrapper(10**0.25)
+make_Wji_wrapper(2)
