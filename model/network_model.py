@@ -219,6 +219,13 @@ def makeWji_all_types(rng: np.random.default_rng, numPairs: float,
     if meanStrengths.size != 4:
         raise ValueError("meanStrengths and stdStrengths must have 4 elements")
     
+    # check that the first two elements of meanStrengths are <= 0
+    if not np.all(meanStrengths[:2] <= 0):
+        raise ValueError("The first two elements of meanStrengths must be <= 0")
+    # check that the last two elements of meanStrengths are >= 0
+    if not np.all(meanStrengths[2:] >= 0):
+        raise ValueError("The last two elements of meanStrengths must be >= 0")
+    
     return np.array([make_Wji(rng, numPairs, strength, std, timeout=timeout,
                              mean_tol=mean_tol, std_tol=std_tol, verbose=verbose, timeout_limit=timeout_limit) for strength, std in zip(meanStrengths, stdStrengths)])
 
@@ -308,7 +315,8 @@ def _log_normal_helper(rng, numPairs, mu, sigma, mean, mean_tol, timeout=np.inf)
 
 @njit(cache=True)
 def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array, 
-                 IappE: np.array = np.empty((1,1)), IappI: np.array = np.empty((1,1)), dt: float = 1e-3, duration: float = 6) -> tuple:
+                 IappE: np.array = np.empty((1,1)), IappI: np.array = np.empty((1,1)), dt: float = 1e-3, duration: float = 6
+                 ) -> tuple:
     """Use RK4 to simulate a homogenous network of inhibition stabilized pairs.
     
     Simulate the behavior of the network for the given duration. A threshold linear model is used for the firing rates of the units.
@@ -329,8 +337,6 @@ def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array,
         The (numPairs x int(duration/dt)) array of applied input to the inhibitory units.
     IappE : np.array
         The (numPairs x int(duration/dt)) array of applied input to the excitatory units.
-    noise : float
-        The standard deviation of the noise in the input to the excitatory units.
     
     Returns 
     -------
@@ -356,9 +362,6 @@ def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array,
     # initialize Iapp arrays
     if IappE.size == 1: IappE = np.zeros((numPairs, int(duration/dt)))
     if IappI.size == 1: IappI = np.zeros((numPairs, int(duration/dt)))
-    
-    # initialize noise array
-    if sigma_noise.size == 1: sigma_noise = np.zeros((numPairs, 2, int(duration/dt)))
     
     # output arrays
     rates = np.zeros((numPairs, 2, int(duration/dt))) # column 0 is excitatory, column 1 is inhibitory
@@ -410,8 +413,8 @@ def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array,
                          np.dot(np.ascontiguousarray(Wji[3,:,:]), np.ascontiguousarray(rates[:,0,t-1] + rEk3)) + IappI[:,t])
         
         # update variables
-        rates[:,0,t] = rates[:,0,t-1] + (rEk1 + 2*rEk2 + 2*rEk3 + rEk4)/6. + sigma_noise[:,0,t-1] * np.random.normal(0, 1, size=numPairs) * np.sqrt(dt)
-        rates[:,1,t] = rates[:,1,t-1] + (rIk1 + 2*rIk2 + 2*rIk3 + rIk4)/6. + sigma_noise[:,1,t-1] * np.random.normal(0, 1, size=numPairs) * np.sqrt(dt)
+        rates[:,0,t] = rates[:,0,t-1] + (rEk1 + 2*rEk2 + 2*rEk3 + rEk4)/6.
+        rates[:,1,t] = rates[:,1,t-1] + (rIk1 + 2*rIk2 + 2*rIk3 + rIk4)/6.
         
         # make sure the firing rates are within the bounds
         rates[:, :, t] = np.clip(rates[:, :, t], 0, 100)
