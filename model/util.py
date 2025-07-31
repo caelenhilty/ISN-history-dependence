@@ -77,7 +77,7 @@ def make_data_folder(path:str, name:str='data'):
 
     if Path(path + f'/{name}').exists():
         id = 1
-        while Path(f'_{id}').exists():
+        while Path(path + f'/{name}_{id}').exists():
             id += 1
         data_dir = path + f'/{name}_{id}'
         Path(data_dir).mkdir(parents=True, exist_ok=True)

@@ -38,7 +38,7 @@ def trial(i, pset, stim_map, data_dir):
     sequences = lrt.make_all_sequences(6, ['L', 'R'])        
     reliability = lrt.FSM_reliability(sequences, FSM)
     
-    if stable and reliability > 0.73:
+    if stable and reliability > 0.9:
         np.save(data_dir + f"/Wji_{i}_reliability_{reliability:.2f}", Wji)
 
     return reliability
