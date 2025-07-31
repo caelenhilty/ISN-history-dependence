@@ -14,7 +14,7 @@ CV = 0.5
 numPairs=5
 
 def get_Wji(i):
-    rng = np.random.default_rng(i)
+    rng = np.random.default_rng()
     mean_Wji_range = np.logspace(-3, 0, 100).round(5)
     mean_Wji = np.array([-rng.choice(mean_Wji_range), -rng.choice(mean_Wji_range), rng.choice(mean_Wji_range), rng.choice(mean_Wji_range)])
     std_Wji = np.abs(CV * mean_Wji)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     r_stim = np.repeat(r_stim[:, np.newaxis], int(dur/dt), axis=1)
     stim_map = {'L': l_stim, 'R': r_stim}
     
-    n_trials = 100
+    n_trials = 2000
     def task_generator():
         for i in range(n_trials):
             yield (i, pset, stim_map, data_dir)
