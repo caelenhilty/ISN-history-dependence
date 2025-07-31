@@ -8,8 +8,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from model import util, left_right_task as lrt, network_model
 
-plt.style.use('seaborn-v0_8-talk')
-
 # core parameters
 rE_target = 10
 rI_target = 5

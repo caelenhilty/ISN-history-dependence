@@ -219,6 +219,13 @@ def makeWji_all_types(rng: np.random.default_rng, numPairs: float,
     if meanStrengths.size != 4:
         raise ValueError("meanStrengths and stdStrengths must have 4 elements")
     
+    # check that the first two elements of meanStrengths are <= 0
+    if not np.all(meanStrengths[:2] <= 0):
+        raise ValueError("The first two elements of meanStrengths must be <= 0")
+    # check that the last two elements of meanStrengths are >= 0
+    if not np.all(meanStrengths[2:] >= 0):
+        raise ValueError("The last two elements of meanStrengths must be >= 0")
+    
     return np.array([make_Wji(rng, numPairs, strength, std, timeout=timeout,
                              mean_tol=mean_tol, std_tol=std_tol, verbose=verbose, timeout_limit=timeout_limit) for strength, std in zip(meanStrengths, stdStrengths)])
 
@@ -234,15 +241,13 @@ def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
     
 
     if mean_tol is None:
-        mean_tol = 0.05 * mean
+        mean_tol = np.abs(0.05 * mean)
     else:
-        mean_tol = mean_tol * mean # convert to absolute
+        mean_tol = np.abs(mean_tol * mean) # convert to absolute
     if std_tol is None:
-        std_tol = 0.05 * std
+        std_tol = np.abs(0.05 * std)
     else:
-        std_tol = std_tol * std
-    assert mean_tol >= 0, "Mean tolerance must be non-negative"
-    assert std_tol >= 0, "Standard deviation tolerance must be non-negative"
+        std_tol = np.abs(std_tol * std)
 
     if std == 0:
         Wji = np.ones((numPairs, numPairs)) * mean
@@ -308,8 +313,8 @@ def _log_normal_helper(rng, numPairs, mu, sigma, mean, mean_tol, timeout=np.inf)
 
 @njit(cache=True)
 def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array, 
-                 IappE: np.array = np.empty((1,1)), IappI: np.array = np.empty((1,1)), dt: float = 1e-3, duration: float = 6,
-                 sigma_noise: np.array = np.empty((1,1,1))) -> tuple:
+                 IappE: np.array = np.empty((1,1)), IappI: np.array = np.empty((1,1)), dt: float = 1e-3, duration: float = 6
+                 ) -> tuple:
     """Use RK4 to simulate a homogenous network of inhibition stabilized pairs.
     
     Simulate the behavior of the network for the given duration. A threshold linear model is used for the firing rates of the units.
@@ -330,8 +335,6 @@ def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array,
         The (numPairs x int(duration/dt)) array of applied input to the inhibitory units.
     IappE : np.array
         The (numPairs x int(duration/dt)) array of applied input to the excitatory units.
-    noise : float
-        The standard deviation of the noise in the input to the excitatory units.
     
     Returns 
     -------
@@ -357,9 +360,6 @@ def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array,
     # initialize Iapp arrays
     if IappE.size == 1: IappE = np.zeros((numPairs, int(duration/dt)))
     if IappI.size == 1: IappI = np.zeros((numPairs, int(duration/dt)))
-    
-    # initialize noise array
-    if sigma_noise.size == 1: sigma_noise = np.zeros((numPairs, 2, int(duration/dt)))
     
     # output arrays
     rates = np.zeros((numPairs, 2, int(duration/dt))) # column 0 is excitatory, column 1 is inhibitory
@@ -411,8 +411,8 @@ def simulateISN(Wji: np.array, numPairs: int, r0: np.array, pset: np.array,
                          np.dot(np.ascontiguousarray(Wji[3,:,:]), np.ascontiguousarray(rates[:,0,t-1] + rEk3)) + IappI[:,t])
         
         # update variables
-        rates[:,0,t] = rates[:,0,t-1] + (rEk1 + 2*rEk2 + 2*rEk3 + rEk4)/6. + sigma_noise[:,0,t-1] * np.random.normal(0, 1, size=numPairs) * np.sqrt(dt)
-        rates[:,1,t] = rates[:,1,t-1] + (rIk1 + 2*rIk2 + 2*rIk3 + rIk4)/6. + sigma_noise[:,1,t-1] * np.random.normal(0, 1, size=numPairs) * np.sqrt(dt)
+        rates[:,0,t] = rates[:,0,t-1] + (rEk1 + 2*rEk2 + 2*rEk3 + rEk4)/6.
+        rates[:,1,t] = rates[:,1,t-1] + (rIk1 + 2*rIk2 + 2*rIk3 + rIk4)/6.
         
         # make sure the firing rates are within the bounds
         rates[:, :, t] = np.clip(rates[:, :, t], 0, 100)
@@ -550,3 +550,156 @@ def simulateISN_noisy(Wji: np.array, numPairs: int, r0: np.array, pset: np.array
         rates[:, :, t] = np.clip(rates[:, :, t], 0, 100)
     
     return rates
+
+@njit
+def b10ToBinary(n: int):
+    """ Convert a base 10 integer to binary.
+    
+    Parameters
+    ----------
+    n : int
+        The base 10 integer to convert.
+        n must be less than 2^32.
+    
+    Returns
+    -------
+    out : np.array
+        The binary representation of n.
+        Can hold up to 32 bits -- the array is padded with zeros to the left.
+    """
+    # convert a base 10 integer to binary
+    out = np.zeros(32, dtype=np.int64)
+    for i in range(31, -1, -1):
+        k = n >> i
+        if k & 1:
+            out[31-i] = 1
+        
+    return out
+
+def get_all_ISN_states(Wji: np.array, pset, numPairs: int, Eactive: float, Iactive:float,
+                     IappI:np.array=np.empty((1,1)), IappE:np.array=np.empty((1,1)), 
+                     dt:float=1e-5, duration:float=7) -> tuple:
+    assert Wji.ndim == 3, "Wji must be a 3D array"
+    assert duration > 2, "Duration must be greater than 2 seconds"
+    
+    # create a set of initial firing rates
+    activeRates = np.clip(np.array([[Eactive/2, Iactive/2],
+                                [Eactive, Iactive], 
+                                [Eactive + (100-Eactive)/2, Iactive * ((Eactive + (100-Eactive)/2)/Eactive)],
+                                ], dtype=np.float64), 0, 100)
+    
+    # initialize Iapp arays
+    if IappE.size == 1: IappE = np.zeros((numPairs, int(duration/dt))) # size == 1 is used as a placeholder for numba compatibility
+    if IappI.size == 1: IappI = np.zeros((numPairs, int(duration/dt))) # input arrays should never be size 1 other than by default
+    
+    # add small amount of noise to the input currents from t = -1.5 to t = -1
+    noise_mg = 0.001
+    start_idx = int((duration-1.5)/dt)
+    end_idx = int((duration-1)/dt)
+    num_t_steps = end_idx - start_idx
+    IappE[:, start_idx:end_idx] += noise_mg * np.random.randn(numPairs, num_t_steps)
+
+    # output vectors
+    steady_states = np.ones(((2**numPairs)*len(activeRates), numPairs, 2))*-1
+    
+    for n in range(0, 2**numPairs):
+        # uses binary counting to get all possible combinations of active pairs
+        binaryActive = b10ToBinary(n)[-numPairs:] # handles left padding
+        for i in range(len(activeRates)):
+            # set initial conditions
+            r0 = np.zeros((numPairs,2), dtype=np.float64)
+            for pairID in range(numPairs):
+                if binaryActive[pairID] == 1:
+                    r0[pairID,0] = activeRates[i,0]
+                    r0[pairID,1] = activeRates[i,1]
+                    
+            # run simulation
+            rates = simulateISN(Wji, numPairs, r0, pset, IappE, IappI, dt, duration)
+            
+            # check if the rates are stable within 0.1 and below 100 Hz
+            final_rates = rates[:, :, -1]
+            stable = np.allclose(rates[:, :, int((duration-0.5)/dt):-1], final_rates[..., np.newaxis], 
+                                 rtol=0, atol=0.1) and np.all(final_rates < 100)
+            
+            if stable:
+                steady_states[(n * len(activeRates)) + i] = final_rates
+        
+    return steady_states[steady_states[:, 0, 0] != -1]    # filter out the -1 values which indicate that the state was not stable
+
+def count_homogeneous_ISN_states(Wji: np.array, pset, numPairs: int, Eactive: float, Iactive:float,
+                     IappI:np.array=np.empty((1,1)), IappE:np.array=np.empty((1,1)), 
+                     dt:float=1e-5, duration:float=7, ON_threshold=1) -> tuple:
+    assert Wji.ndim == 3, "Wji must be a 3D array"
+    assert duration > 2, "Duration must be greater than 2 seconds"
+    
+    # create a set of initial firing rates for the ON units (OFF units are 0 Hz)
+    active_rates = np.clip(np.array([[Eactive/2, Iactive/2],
+                                [Eactive, Iactive], 
+                                [Eactive + (100-Eactive)/2, Iactive * ((Eactive + (100-Eactive)/2)/Eactive)],
+                                ], dtype=np.float64), 0, 100)
+    
+    # initialize Iapp arays
+    if IappE.size == 1: IappE = np.zeros((numPairs, int(duration/dt))) # size == 1 is used as a placeholder for numba compatibility
+    if IappI.size == 1: IappI = np.zeros((numPairs, int(duration/dt))) # input arrays should never be size 1 other than by default
+    
+    # add small amount of noise to the input currents from t = -1.5 to t = -1
+    noise_mg = 0.001
+    start_idx = int((duration-1.5)/dt)
+    end_idx = int((duration-1)/dt)
+    num_t_steps = end_idx - start_idx
+    IappE[:, start_idx:end_idx] += noise_mg * np.random.randn(numPairs, num_t_steps)
+
+    possible_on_states = np.ones(numPairs * len(active_rates), dtype=np.int64) * -1
+
+    for n in range(0, numPairs):
+        for i in range(len(active_rates)):
+            r0 = np.zeros((numPairs,2), dtype=np.float64)
+            # set initial conditions
+            r0[:n, 0] = active_rates[i,0]
+            r0[:n, 1] = active_rates[i,1]
+            
+            # run simulation
+            rates = simulateISN(Wji, numPairs, r0, pset, IappE, IappI, dt, duration)
+            
+            # check for stability
+            final_rates = rates[:, :, -1]
+            stable = np.allclose(rates[:, :, int((duration-0.5)/dt):-1], final_rates[..., np.newaxis], 
+                                 rtol=0, atol=0.1) and np.all(final_rates < 100)
+            
+            if stable:
+                # count the number of ON units (considering only E units)
+                on_count = np.sum(final_rates[:, 0] > ON_threshold)
+                possible_on_states[(n * len(active_rates)) + i] = on_count
+
+    possible_on_states = possible_on_states[possible_on_states != -1]  # filter out the -1 values
+    # count the number of unique ON states
+    return np.sum([__nCr(numPairs, r) for r in np.unique(possible_on_states)])
+    
+@njit
+def __factorial(n:int) -> int:
+    """ Calculate the factorial of a number n. njit version.
+
+    Parameters
+    ----------
+    n : int
+        The number to calculate the factorial of.
+        
+    Returns
+    -------
+    int
+        The factorial of n.
+    """
+    if n == 0 or n == 1:
+        return 1
+    else:
+        return n * __factorial(n - 1)
+
+@njit
+def __nCr(n:int, r:int) -> int:
+    """ Calculate the number of combinations of n items taken r at a time. njit version."""
+    if r > n:
+        return 0
+    if r == 0 or r == n:
+        return 1
+    # calculate n choose r (combinations), round to nearest integer
+    return __factorial(n) // (__factorial(r) * __factorial(n - r))
