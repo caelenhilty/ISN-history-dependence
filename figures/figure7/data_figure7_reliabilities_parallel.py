@@ -8,10 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from model import util, left_right_task as lrt
 
-Wji, pset, _, _, _, _ = util.load_fiducial_network()
-
-kernels = np.load(f'data_different_kernels/kernels.npy')
-l_kernel, r_kernel = kernels[4, 0], kernels[4, 1]
+Wji, pset, _, _, l_kernel, r_kernel = util.load_fiducial_network()
 
 # task parameters
 numPairs = 5
@@ -78,8 +75,8 @@ if __name__ == '__main__':
     # parameter sweep
     print("Running parameter sweep...")
     n = 50
-    
-    amp_min = max(pset[-2]/np.max(kernels[4]), 1)   # ensure minimum amplitude is at least 1
+
+    amp_min = max(pset[-2]/np.max([l_kernel, r_kernel]), 1)   # ensure minimum amplitude is at least 1
     # larger if thetaE is large, to ensure the stimulus is strong enough
     print(f"Minimum amplitude: {amp_min}")
 
