@@ -44,7 +44,7 @@ def load_fiducial_network(in_figure_folder:bool=False):
         os.chdir(os.path.join(os.getcwd(), 'model'))
     
     id, _, pset, amp, dur, l_kernel, r_kernel = tuple(pd.read_csv('fiducial_network.csv'))
-    Wji = np.load(f'Wji_{id}.npy')
+    Wji = np.load(f'Wji_10_reliability_1.00.npy')
 
     # convert strings to appropriate types
     str_to_arr = lambda s, d: np.array([float(x) for x in s.removeprefix('[').removesuffix(']').split(d)])
