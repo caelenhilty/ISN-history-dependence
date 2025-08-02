@@ -19,7 +19,9 @@ equil_duration = 2
 
 def run_model(dur, amp):
     if dur == 0:
-        return 0.5  # return a default reliability for zero duration
+        decision_dict = {s:'Tie' for s in sequences}
+        p_curve = np.ones(seq_len+1)*0.5
+        return 0.5, p_curve, decision_dict
 
     # define the stimulus
     stim_map = lrt.make_stim_map(numPairs, amp, dur, l_kernel, r_kernel, dt)
@@ -74,7 +76,7 @@ if __name__ == '__main__':
     import time
     # parameter sweep
     print("Running parameter sweep...")
-    n = 50
+    n = 40
 
     amp_min = max(pset[-2]/np.max([l_kernel, r_kernel]), 1)   # ensure minimum amplitude is at least 1
     # larger if thetaE is large, to ensure the stimulus is strong enough
@@ -85,13 +87,15 @@ if __name__ == '__main__':
     dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration on x-axis
     dur_flat, amp_flat = dur_mesh.ravel(), amp_mesh.ravel()
     print(f"Running {len(dur_flat)} simulations...")
-    start = time.time()
-    with mp.Pool(mp.cpu_count()) as pool:
-        results = np.array(pool.starmap(run_model, zip(dur_flat, amp_flat)))
-    print(f"Completed in {time.time() - start:.2f} seconds.")
+    try:
+        start = time.time()
+        with mp.Pool(mp.cpu_count()) as pool:
+            results = pool.starmap(run_model, zip(dur_flat, amp_flat))
+        print(f"Completed in {time.time() - start:.2f} seconds.")
+    except KeyboardInterrupt:
+        pool.terminate()
     pool.close()
     pool.join()
-
     # unpack results
     reliabilities, p_curves, decision_dicts = zip(*results)
     reliabilities = np.array(reliabilities)
