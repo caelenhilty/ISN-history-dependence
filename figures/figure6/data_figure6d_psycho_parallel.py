@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     # save results
     # make a data folder
-    data_dir = util.make_data_folder('figures/figure6')
+    data_dir = util.make_data_folder('figures/figure6', name='psycho_v2')
     print(f"Saving results to {data_dir}...")
     # save the dataframe
     df_decisions.to_csv(f'{data_dir}/decision_dict.csv')
