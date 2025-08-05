@@ -85,14 +85,19 @@ if __name__ == '__main__':
 
     n_trials = 1000
 
-    start_time = time.time()
-    with mp.Pool(mp.cpu_count()) as pool:
-        results = pool.map(run_trial, range(n_trials))
-    pool_time = time.time() - start_time
+    print(f"Running {n_trials} trials... with {mp.cpu_count()} processes")
+    try:
+        start_time = time.time()
+        with mp.Pool(mp.cpu_count()) as pool:
+            results = pool.map(run_trial, range(n_trials))
+        pool_time = time.time() - start_time
+        
+        print(f"Completed {n_trials} trials in {pool_time:.2f} seconds")
+    except KeyboardInterrupt:
+        pool.terminate()
     pool.close()
     pool.join()
-    print(f"Completed {n_trials} trials in {pool_time:.2f} seconds")
-
+    
     # unpack results
     p_curves = np.zeros((n_trials, seq_len + 1))
     reliabilities = np.zeros(n_trials)
