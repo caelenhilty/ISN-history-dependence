@@ -27,29 +27,29 @@ if __name__ == '__main__':
     Wji_stds = [np.std(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
     CV = np.mean(np.array(Wji_stds) / np.array(Wji_means))
         
-    # numPairs_range = np.arange(1, 11, 2)  # Range of number of pairs to test
-    # n_trials = 10
+    numPairs_range = np.arange(1, 11, 2)  # Range of number of pairs to test
+    n_trials = 10
     
-    # def yield_next_task():
-    #     for numPairs in numPairs_range:
-    #         print(f'Counting states for numPairs = {numPairs}', end='\r')
-    #         for i in range(n_trials):
-    #             means = np.array(Wji_means) * 5 / numPairs  # scale to match the number of pairs (was 5 originally)
-    #             Wji = network_model.makeWji_all_types(np.random.default_rng(i), numPairs, means, means * CV)
-    #             yield (Wji, i, numPairs, pset)
+    def yield_next_task():
+        for numPairs in numPairs_range:
+            print(f'Counting states for numPairs = {numPairs}', end='\r')
+            for i in range(n_trials):
+                means = np.array(Wji_means) * 5 / numPairs  # scale to match the number of pairs (was 5 originally)
+                Wji = network_model.makeWji_all_types(np.random.default_rng(i), numPairs, means, means * CV)
+                yield (Wji, i, numPairs, pset)
 
-    # # count states for each parameter set
-    # try:
-    #     with mp.Pool(mp.cpu_count()) as pool:
-    #         results = pool.starmap(trial, yield_next_task())
-    # except KeyboardInterrupt:
-    #     pool.terminate()
-    #     pool.join()
-    # pool.close()
-    # pool.join()
+    # count states for each parameter set
+    try:
+        with mp.Pool(mp.cpu_count()) as pool:
+            results = pool.starmap(trial, yield_next_task())
+    except KeyboardInterrupt:
+        pool.terminate()
+        pool.join()
+    pool.close()
+    pool.join()
     
-    # results = np.array(results)
+    results = np.array(results)
     
-    # # save data
-    # data_dir = util.make_data_folder('figures/figure4', name='n_states_vs_n_pairs')
-    # np.save(data_dir + '/counts.npy', results)
+    # save data
+    data_dir = util.make_data_folder('figures/figure4', name='n_states_vs_n_pairs')
+    np.save(data_dir + '/counts.npy', results)
