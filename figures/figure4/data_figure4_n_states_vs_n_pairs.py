@@ -24,9 +24,9 @@ if __name__ == '__main__':
 
     # core parameters
     Wji_means = [np.mean(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
-    Wji_stds = [np.std(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
-    CV = np.mean(np.array(Wji_stds) / np.array(Wji_means))
-        
+    Wji_stds = np.abs([np.std(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji])
+    CV = np.mean(np.array(Wji_stds) / np.abs(np.array(Wji_means)))
+    
     numPairs_range = np.arange(1, 11, 2)  # Range of number of pairs to test
     n_trials = 10
     
@@ -35,11 +35,12 @@ if __name__ == '__main__':
             print(f'Counting states for numPairs = {numPairs}', end='\r')
             for i in range(n_trials):
                 means = np.array(Wji_means) * 5 / numPairs  # scale to match the number of pairs (was 5 originally)
-                Wji = network_model.makeWji_all_types(np.random.default_rng(i), numPairs, means, means * CV)
+                Wji = network_model.makeWji_all_types(np.random.default_rng(i), numPairs, means, np.abs(means * CV))
                 yield (Wji, i, numPairs, pset)
 
     # count states for each parameter set
     try:
+        print('Counting states for each parameter set...')
         with mp.Pool(mp.cpu_count()) as pool:
             results = pool.starmap(trial, yield_next_task())
     except KeyboardInterrupt:
