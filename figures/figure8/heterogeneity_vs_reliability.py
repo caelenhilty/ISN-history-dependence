@@ -33,9 +33,9 @@ def run_model(Wji, dur, amp):
     return reliability
 
 if __name__ == "__main__":
-    data_dir = 'figures/figure8/data_1'
+    data_dir = 'figures/figure8/backup'
     output_dir = util.make_data_folder(data_dir, name='raw_reliabilities')
-    CVs = [0.25, 1.00, 2.00]
+    CVs = [0.05]
 
     # universal parameter sweep
     n = 20
@@ -72,6 +72,6 @@ if __name__ == "__main__":
         print(f"\nFinished running for CV={CV:.2f}")
     
     # also run for CV = 0.00
-    os.makedirs(Path(output_dir + '/CV_0.00'), exist_ok=True)
-    run_sweep(0.0, 1)  # only one network for CV = 0.00
+    # os.makedirs(Path(output_dir + '/CV_0.00'), exist_ok=True)
+    # run_sweep(0.0, 1)  # only one network for CV = 0.00
 

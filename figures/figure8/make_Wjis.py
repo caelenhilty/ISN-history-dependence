@@ -20,22 +20,22 @@ numPairs = 5  # number of pairs of neurons in the network
 def make_Wji_wrapper(CV):
     print(f"Generating Wji with CV={CV:.2f}")
     rng = np.random.default_rng()
-    stds = [mean * CV for mean in Wji_means]
+    stds = np.abs([mean * CV for mean in Wji_means])
     start = time.time()
     Wji = network_model.makeWji_all_types(rng, numPairs, np.array(Wji_means), np.array(stds),
                                           std_tol=0.1)
     # compute CV acheived
     means = [np.mean(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
-    stds = [np.std(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
-    CV_true = np.mean(np.array(stds)/np.array(means))
+    stds = [np.abs(np.std(w[np.eye(w.shape[0], dtype=bool) == False])) for w in Wji]
+    CV_true = np.mean(np.array(stds)/np.abs(np.array(means)))
     print(f"Finished Wji with CV={CV:.2f}, true CV = {CV_true:.2f} in {time.time() - start:.3f} seconds")
     return Wji
 
 if __name__ == "__main__":
     # set up parameter sweep
-    CVs = np.array([0.25, 1, 2])
+    CVs = np.array([0.05])
     # add zero to the front of the CVs for the zero-variance case
-    CVs = np.insert(CVs, 0, 0.0)  # zero-variance case
+    # CVs = np.insert(CVs, 0, 0.0)  # zero-variance case
     # repeat n_networks times
     n_networks = 10
     CVs = np.repeat(CVs, n_networks)
