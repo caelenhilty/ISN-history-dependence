@@ -9,7 +9,35 @@ from model import util, left_right_task as lrt, network_model
 # core parameters
 rE_target = 10
 rI_target = 5
-thetaE = 5.34
-thetaI = 82.43
-max_duration = 12
+Wji, pset, _, _, _, _ = util.load_fiducial_network()
+max_duration = 6
 dt = 1e-5
+
+def trial(amp, dur):
+    if dur == 0:
+        return 0
+    G = network_model.get_state_transition_graph(Wji, pset, amp, dur, Eactive=rE_target, Iactive=rI_target, max_duration=max_duration, dt=dt)
+    return network_model.longest_path(G)
+
+if __name__ == '__main__':
+    # parameter sweep setup
+    n = 30
+    amp_range = np.logspace(np.log10(pset[-2]), 2, n) # amplitude should be > thetaE
+    dur_range = np.linspace(0.01, 0.05, n)
+    dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration on x-axis
+    dur_flat, amp_flat = dur_mesh.ravel(), amp_mesh.ravel()
+
+    print(f"Starting {len(amp_flat)} trials with {mp.cpu_count()} processes...")
+    try:
+        with mp.Pool(processes=1) as pool:
+            results = pool.starmap(trial, zip(amp_flat, dur_flat))
+    except KeyboardInterrupt:
+        pool.terminate()
+    pool.close()
+    pool.join()
+    
+    results = np.array(results)
+    data_dir = util.make_data_folder('figures/figure3')
+    np.save(data_dir + '/longest_paths.npy', results)
+    np.save(data_dir + '/dur_mesh.npy', dur_mesh)
+    np.save(data_dir + '/amp_mesh.npy', amp_mesh)
