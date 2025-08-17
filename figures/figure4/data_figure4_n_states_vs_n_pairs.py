@@ -11,13 +11,13 @@ rE_target = 10
 rI_target = 5
 thetaE = 5.34
 thetaI = 82.43
-max_duration = 12
+max_duration = 6
 dt = 1e-5
 
 def trial(Wji, i, numPairs, pset):
-    return i, numPairs, network_model.count_homogeneous_ISN_states(Wji, pset, numPairs, 
-                                                      rE_target, rI_target, 
-                                                      dt=dt, duration=max_duration)
+    states = network_model.get_all_states(Wji, pset, numPairs, rE_target, rI_target, dt=dt, duration=max_duration)
+    n_states = len(np.unique(np.round(states, 0), axis=0))
+    return i, numPairs, n_states
 
 if __name__ == '__main__':
     Wji, pset, _, _, _, _ = util.load_fiducial_network()

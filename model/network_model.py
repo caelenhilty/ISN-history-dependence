@@ -765,8 +765,8 @@ def get_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_d
     # get all states
     numPairs = Wji.shape[1]
     states = get_all_states(Wji, pset, numPairs, Eactive, Iactive, duration = max_duration, dt=dt)
-    states = np.unique(states, axis=0)  # remove duplicates
-    states = [np.array(state) for state in states]  # convert to list
+    _, unique_idxs = np.unique(np.round(states, 0), axis=0, return_index=True)  # remove duplicates
+    states = [np.array(state) for state in states[unique_idxs]]  # convert to list
 
     # edge simulation setup
     duration = 2*equil_duration + stim_duration
