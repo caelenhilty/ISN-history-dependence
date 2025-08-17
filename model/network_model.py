@@ -825,7 +825,7 @@ def longest_path(G):
     return np.max(lengths)
 
 def get_longest_path(G):
-    """ Return all nodes involved in the longest path in G.
+    """ Return all nodes involved in the longest path(s) in G.
     Only works for graphs where every node has out-degree of 1 (as in the state transition graph).
     """
     max_length = 0
