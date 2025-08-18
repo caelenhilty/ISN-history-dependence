@@ -80,11 +80,10 @@ if __name__ == '__main__':
     # inner loop over stimulus parameters
     m = 50
     stimulus_durations = np.logspace(-3, 0, m)
-    stimulus_amplitudes = np.logspace(0, 3, m)
+    stimulus_amplitudes = np.logspace(0, 2, m)
     STIM_DUR, STIM_AMP = np.meshgrid(stimulus_durations, stimulus_amplitudes)
     STIM_DUR_, STIM_AMP_ = STIM_DUR.ravel(), STIM_AMP.ravel()
     
-    out_dir = util.make_data_folder('figures/figure2', name='wider')
     for i, (x, y) in tqdm(enumerate(selected_points)):
         WEE = WEE_mesh[x, y]
         WEI = WEI_mesh[x, y]
@@ -100,7 +99,7 @@ if __name__ == '__main__':
         results = np.array(results).reshape(STIM_DUR.shape)
         
         # save results
-        np.save(out_dir + f'/sample_({x},{y})_stim_sweep.npy', results)
+        np.save(data_dir + f'/sample_({x},{y})_stim_sweep.npy', results)
     
     
     
