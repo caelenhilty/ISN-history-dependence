@@ -1,9 +1,10 @@
 from operator import ge
-from numba import prange, njit, vectorize, float64
+from numba import njit, vectorize, float64
 import numpy as np
 from os import urandom
 import matplotlib.pyplot as plt
 import time
+import networkx as nx
 
 # ----------------- Network Equation ------------------ #
 # rate equation (nonlinearity enforced by solver)
@@ -233,7 +234,33 @@ def make_Wji(rng:np.random.default_rng, numPairs:int, mean:float, std:float,
                  mean_tol = None, std_tol =None, timeout=np.inf, timeout_limit=np.inf,
                  verbose=False):
     """
-    
+    Create a weight matrix for the connections between pairs of neurons.
+
+    Parameters
+    ----------
+    rng : np.random.default_rng
+        The random number generator to use.
+    numPairs : int
+        The number of pairs of neurons.
+    mean : float
+        The mean weight for the connections.
+    std : float
+        The standard deviation of the weights.
+    mean_tol : float, optional
+        The tolerance for the mean weight (default is None).
+    std_tol : float, optional
+        The tolerance for the standard deviation (default is None).
+    timeout : float, optional
+        The timeout for the weight matrix generation (default is np.inf).
+    timeout_limit : int, optional
+        The maximum number of timeouts allowed (default is np.inf).
+    verbose : bool, optional
+        Whether to print verbose output (default is False).
+
+    Returns
+    -------
+    np.ndarray
+        The weight matrix for the connections between pairs of neurons. Shape: (numPairs x numPairs)
     """
     
     assert mean != 0, "Mean cannot be zero"
@@ -576,7 +603,7 @@ def b10ToBinary(n: int):
         
     return out
 
-def get_all_ISN_states(Wji: np.array, pset, numPairs: int, Eactive: float, Iactive:float,
+def get_all_states(Wji: np.array, pset, numPairs: int, Eactive: float, Iactive:float,
                      IappI:np.array=np.empty((1,1)), IappE:np.array=np.empty((1,1)), 
                      dt:float=1e-5, duration:float=7) -> tuple:
     assert Wji.ndim == 3, "Wji must be a 3D array"
@@ -703,3 +730,116 @@ def __nCr(n:int, r:int) -> int:
         return 1
     # calculate n choose r (combinations), round to nearest integer
     return __factorial(n) // (__factorial(r) * __factorial(n - r))
+
+def get_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_duration = 2, dt = 1e-5,
+                               Eactive = 5, Iactive = 10, max_duration=12, states=None):
+    """ Creates a graph of the state transitions elicited by the specified stimulus.
+    First, finds all states, then performs one simulation per state to find all edges.
+    
+    Parameters
+    ----------
+    Wji : np.ndarray
+        The weight matrix of the network.
+    pset : dict
+        The parameter set for the simulation.
+    stim_amplitude : float
+        The amplitude of the stimulus.
+    stim_duration : float
+        The duration of the stimulus.
+    equil_duration : float, optional
+        The duration of the equilibration period (default is 2 seconds).
+    dt : float, optional
+        The time step for the simulation (default is 1e-5 seconds).
+    Eactive : float, optional
+        The initial firing rate of the excitatory population (default is 5 Hz).
+    Iactive : float, optional
+        The initial firing rate of the inhibitory population (default is 10 Hz).
+    max_duration : float, optional
+        The duration spent allowing the network to reach a steady state during the initial state search.
+    states : optional
+        If states are passed, will skip the state-finding step (often the slowest part)
+
+    Returns
+    -------
+    nx.DiGraph
+        A directed graph representing the state transitions of the network.
+    """
+    # get all states
+    numPairs = Wji.shape[1]
+    if states is None:
+        states = get_all_states(Wji, pset, numPairs, Eactive, Iactive, duration = max_duration, dt=dt)
+        _, unique_idxs = np.unique(np.round(states, 0), axis=0, return_index=True)  # remove duplicates
+        states = [np.array(state) for state in states[unique_idxs]]  # convert to list
+
+    # edge simulation setup
+    duration = 2*equil_duration + stim_duration
+    IappE = np.zeros((numPairs, int(duration/dt)))
+    IappE[::, int(equil_duration/dt):int((equil_duration + stim_duration)/dt)] = stim_amplitude  # apply stimulus to all pairs
+    IappI = np.copy(IappE)  # same for inhibitory units
+
+    # construct graph
+    G = nx.DiGraph()
+    unstable_states = False
+    for i, state in enumerate(states):
+        G.add_node(i+1) # won't add repeated states
+
+        rates = simulateISN(Wji, numPairs, state, pset,
+                            IappE, IappI,
+                            dt=dt, duration=duration)
+        final_state = rates[:, :, -1]
+        
+        # no self loops (instead indicated by out-degree zero)
+        if np.allclose(final_state, state, rtol=0, atol=0.5):
+            continue
+        
+        # identify final_state
+        for match_idx, match_state in enumerate(states):
+            found = np.allclose(final_state, match_state, rtol=0, atol=0.5)
+            if found:
+                G.add_edge(i+1, match_idx+1) # adds nodes if necessary
+                break
+        if not found:
+            # check stability
+            stable = np.allclose(rates[:, :, int((duration-1)/dt):-1], rates[:, :, -1][..., np.newaxis], rtol=0, atol=0.1) and np.all(final_state < 100)
+            if stable:
+                G.add_edge(i+1, len(states) + 1)
+                states.append(final_state)  # add new state if not found in the existing states
+            else:
+                unstable_states = True
+                G.add_edge(i+1, -1) # always use -1 for unstable states (will always end up as a sink)
+                # don't add to the states list -- don't want to simulate unstable states
+
+        return G, unstable_states
+    
+def longest_path(G):
+    """Find length of the longest path in G.
+    Only works for graphs where every node has out-degree of 1 (as in the state transition graph).
+    """
+    involved_nodes = get_longest_path(G)
+    G2 = G.subgraph(involved_nodes)
+    try:
+        cycle = nx.find_cycle(G2, orientation='original')
+    except nx.exception.NetworkXNoCycle:
+        return nx.dag_longest_path_length(G2)
+    
+    lengths = np.zeros(G2.number_of_nodes())
+    for i, node in enumerate(G2.nodes):
+        lengths[i] = len(nx.dfs_successors(G2, source = node, depth_limit=G2.number_of_nodes())) + 1
+    return np.max(lengths)
+
+def get_longest_path(G):
+    """ Return all nodes involved in the longest path(s) in G.
+    Only works for graphs where every node has out-degree of 1 (as in the state transition graph).
+    """
+    max_length = 0
+    involved_nodes = []
+    for node in G.nodes:
+        successors = nx.dfs_successors(G, source = node, depth_limit=G.number_of_nodes())
+        length = len(successors) + 1
+        if length > max_length:
+            max_length = length
+            involved_nodes = set(successors.keys()).union({val for row in successors.values() for val in row})
+        if length == max_length:
+            involved_nodes = involved_nodes.union(set(successors.keys()).union({val for row in successors.values() for val in row}))
+    
+    return involved_nodes
