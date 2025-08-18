@@ -13,7 +13,7 @@ from model import left_right_task as lrt, network_model, util, plot_style
 Wji, pset, amp, dur, l_kernel, r_kernel = util.load_fiducial_network()
 
 # load data
-data_dir = 'figures/figure7/data'
+data_dir = 'figures/figure6/data'
 reliabilities = np.load(data_dir + '/reliabilities.npy')
 dur_mesh_7A = np.load(data_dir + '/dur_mesh.npy')
 amp_mesh_7A = np.load(data_dir + '/amp_mesh.npy')
@@ -301,4 +301,4 @@ for i, FSM in enumerate(FSMs):
     pos = nx.spring_layout(FSM, seed=1) if i == 1 else nx.kamada_kawai_layout(FSM)
     plot_FSM(FSM, e_axes[i], node_size=200, connection_map={'L': 'arc3,rad=0.1', 'R': 'arc3,rad=0.2'}, pos=pos)
     
-plt.savefig('figures/figure7/figure6_raw.tiff')
+plt.savefig('figures/figure6/figure6_raw.tiff')
