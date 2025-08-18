@@ -732,7 +732,7 @@ def __nCr(n:int, r:int) -> int:
     return __factorial(n) // (__factorial(r) * __factorial(n - r))
 
 def get_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_duration = 2, dt = 1e-5,
-                               Eactive = 5, Iactive = 10, max_duration=12):
+                               Eactive = 5, Iactive = 10, max_duration=12, states=None):
     """ Creates a graph of the state transitions elicited by the specified stimulus.
     First, finds all states, then performs one simulation per state to find all edges.
     
@@ -756,6 +756,8 @@ def get_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_d
         The initial firing rate of the inhibitory population (default is 10 Hz).
     max_duration : float, optional
         The duration spent allowing the network to reach a steady state during the initial state search.
+    states : optional
+        If states are passed, will skip the state-finding step (often the slowest part)
 
     Returns
     -------
@@ -764,9 +766,10 @@ def get_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_d
     """
     # get all states
     numPairs = Wji.shape[1]
-    states = get_all_states(Wji, pset, numPairs, Eactive, Iactive, duration = max_duration, dt=dt)
-    _, unique_idxs = np.unique(np.round(states, 0), axis=0, return_index=True)  # remove duplicates
-    states = [np.array(state) for state in states[unique_idxs]]  # convert to list
+    if states is None:
+        states = get_all_states(Wji, pset, numPairs, Eactive, Iactive, duration = max_duration, dt=dt)
+        _, unique_idxs = np.unique(np.round(states, 0), axis=0, return_index=True)  # remove duplicates
+        states = [np.array(state) for state in states[unique_idxs]]  # convert to list
 
     # edge simulation setup
     duration = 2*equil_duration + stim_duration
