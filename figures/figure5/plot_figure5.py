@@ -179,7 +179,7 @@ def plot_trace(rates, IappE, fig, ax1, ax2):
     
 import scipy
 
-def plot_p_curves(ax, data_dir='figures/figure6/psycho_data', seq_len=6):
+def plot_p_curves(ax, data_dir='figures/figure5/psycho_data', seq_len=6):
     data = np.load(data_dir + '/p_curves.npy', allow_pickle=True)
     reliabilities = np.load(data_dir + '/reliabilities.npy', allow_pickle=True)
     good_p_curves = data[reliabilities > 0.73]
@@ -230,4 +230,4 @@ plot_p_curves(axd['D'])
 axd['D'].plot(np.arange(7), p_left, color='red', alpha=0.5, label='fiducial')
 ax.legend()
 
-plt.savefig('figures/figure6/figure6_raw.png')
+plt.savefig('figures/figure5/figure5_raw.png')
