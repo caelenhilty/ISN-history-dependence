@@ -6,9 +6,7 @@ import multiprocessing as mp
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from model import util, left_right_task as lrt, network_model
-
-plt.style.use('seaborn-v0_8-talk')
+from model import network_model, util
 
 # core parameters
 rE_target = 10
@@ -65,33 +63,33 @@ def trial(stim_amp, stim_dur, WEE, WEI, WIE, WII):
     return 0
 
 if __name__ == '__main__':
-    n = 30
-    WEE_mesh = np.load('figures/figure2/trace_vs_det/WEE_mesh.npy', allow_pickle=True)
-    WEI_mesh = np.load('figures/figure2/trace_vs_det/WEI_mesh.npy', allow_pickle=True)
-    WIE_mesh = np.load('figures/figure2/trace_vs_det/WIE_mesh.npy', allow_pickle=True)
-    WII_mesh = np.load('figures/figure2/trace_vs_det/WII_mesh.npy', allow_pickle=True)
+    data_dir = 'figures/figure2/trace_vs_det_1'
+    WEE_mesh = np.load(data_dir + '/WEE_mesh.npy', allow_pickle=True)
+    WEI_mesh = np.load(data_dir + '/WEI_mesh.npy', allow_pickle=True)
+    WIE_mesh = np.load(data_dir + '/WIE_mesh.npy', allow_pickle=True)
+    WII_mesh = np.load(data_dir + '/WII_mesh.npy', allow_pickle=True)
+    n = int(np.sqrt(WEE_mesh.shape[0]))
     WEE_mesh = WEE_mesh.reshape((n, n))
     WEI_mesh = WEI_mesh.reshape((n, n))
     WIE_mesh = WIE_mesh.reshape((n, n))
     WII_mesh = WII_mesh.reshape((n, n))
     
     # outer loop over selected points
-    selected_points = [(1, 3), (6, 8),(5, 20)]
+    selected_points = [(1, 3), (25, 20),(10, 35)]
     
     # inner loop over stimulus parameters
     m = 50
     stimulus_durations = np.logspace(-3, 0, m)
-    stimulus_amplitudes = np.logspace(0, 2, m)
+    stimulus_amplitudes = np.logspace(0, 3, m)
     STIM_DUR, STIM_AMP = np.meshgrid(stimulus_durations, stimulus_amplitudes)
     STIM_DUR_, STIM_AMP_ = STIM_DUR.ravel(), STIM_AMP.ravel()
     
-    for i, (x, y) in enumerate(selected_points):
+    out_dir = util.make_data_folder('figures/figure2', name='wider')
+    for i, (x, y) in tqdm(enumerate(selected_points)):
         WEE = WEE_mesh[x, y]
         WEI = WEI_mesh[x, y]
         WIE = WIE_mesh[x, y]
         WII = WII_mesh[x, y]
-        
-        print(f'Running trials for point ({x}, {y}) with WEE={WEE}, WEI={WEI}, WIE={WIE}, WII={WII}')
         
         # run trials in parallel
         with mp.Pool(mp.cpu_count()) as pool:
@@ -102,7 +100,7 @@ if __name__ == '__main__':
         results = np.array(results).reshape(STIM_DUR.shape)
         
         # save results
-        np.save(f'figures/figure2/trace_vs_det/sample_({x},{y})_stim_sweep.npy', results)
+        np.save(out_dir + f'/sample_({x},{y})_stim_sweep.npy', results)
     
     
     
