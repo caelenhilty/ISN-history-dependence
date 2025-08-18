@@ -23,6 +23,7 @@ Codes for Hilty and Miller, 2026: "Inhibitory-stabilization is sufficient for hi
 
 - `model`: Contains the core model code, including fiducial network parameters and simulation functions.
 - `figures`: Contains the code and data for generating figures. Each folder contains two types of `.py` scripts: those for generating the data and one for plotting the figure. Data used in the paper is also included in these folders. If you generate your own data, you will need to change file paths accordingly in the plotting scripts.
+- `__dev` folders: Contain miscelaneous .ipynb files, old/bugged data used during development.
 
 ## Usage
 1) Clone the code locally.
