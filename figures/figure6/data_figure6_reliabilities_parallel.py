@@ -103,7 +103,7 @@ if __name__ == '__main__':
     decision_dicts = pd.DataFrame({i: decision_dicts[i] for i in range(len(decision_dicts))})
     
     # count the number of reliabilities.npy in the figures/figure6 directory
-    data_dir = util.make_data_folder('figures/figure7')
+    data_dir = util.make_data_folder('figures/figure6')
     np.save(data_dir + '/reliabilities.npy', np.array(reliabilities))
     np.save(data_dir + '/dur_mesh.npy', dur_mesh)
     np.save(data_dir + '/amp_mesh.npy', amp_mesh)
