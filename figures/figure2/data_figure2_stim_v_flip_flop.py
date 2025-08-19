@@ -63,7 +63,10 @@ def trial(stim_amp, stim_dur, WEE, WEI, WIE, WII):
     return 0
 
 if __name__ == '__main__':
-    data_dir = 'figures/figure2/trace_vs_det_1'
+    # must run data_figure2_tr_v_det_parallel.py first
+    # use the data folder generated in that script here:
+    data_dir = 'figures/figure2/data' 
+    
     WEE_mesh = np.load(data_dir + '/WEE_mesh.npy', allow_pickle=True)
     WEI_mesh = np.load(data_dir + '/WEI_mesh.npy', allow_pickle=True)
     WIE_mesh = np.load(data_dir + '/WIE_mesh.npy', allow_pickle=True)
@@ -101,5 +104,5 @@ if __name__ == '__main__':
         # save results
         np.save(data_dir + f'/sample_({x},{y})_stim_sweep.npy', results)
     
-    
-    
+    np.save(data_dir + '/stim_durations.npy', stimulus_durations)
+    np.save(data_dir + '/stim_amplitudes.npy', stimulus_amplitudes)

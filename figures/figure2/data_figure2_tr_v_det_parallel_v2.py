@@ -115,9 +115,11 @@ if __name__ == '__main__':
     areas = np.array(results)
     
     # save data
-    data_dir = util.make_data_folder('figures/figure2', name='trace_vs_det')
+    data_dir = util.make_data_folder('figures/figure2', name='data')
     np.save(data_dir + '/WEE_mesh.npy', WEE_mesh)
     np.save(data_dir + '/WEI_mesh.npy', WEI_mesh)
     np.save(data_dir + '/WIE_mesh.npy', WIE_mesh)
     np.save(data_dir + '/WII_mesh.npy', WII_mesh)
+    np.save(data_dir + '/trace_mesh.npy', trace_mesh_)
+    np.save(data_dir + '/determinant_mesh.npy', determinant_mesh_)
     np.save(data_dir + '/areas.npy', areas)
