@@ -15,6 +15,8 @@ determinants = np.load(data_dir + '/determinant_mesh.npy', allow_pickle=True)
 n = int(np.sqrt(len(areas)))
 trace_mesh = traces.reshape((n, n))
 determinant_mesh = determinants.reshape((n, n))
+WEE_mesh = np.load(data_dir + '/WEE_mesh.npy', allow_pickle=True)
+areas = np.where(np.isnan(WEE_mesh), np.nan, areas)
 
 stimulus_durations = np.load(data_dir + '/stim_durations.npy', allow_pickle=True)
 stimulus_amplitudes = np.load(data_dir + '/stim_amplitudes.npy', allow_pickle=True)
