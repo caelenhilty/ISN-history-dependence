@@ -72,3 +72,4 @@ cbar = fig.colorbar(c, cax=axd['x'], location='right')
 plot_n_pairs_vs_states(axd['A'])
 
 plt.savefig('figures/figure4/figure4.png')
+plt.savefig('figures/figure4/figure4.tiff', dpi=600)
