@@ -69,6 +69,7 @@ for label, ax in axd.items():
         det_line = det_line[idx_min:idx_max]
         trace_line = trace_line[idx_min:idx_max]
         ax.plot(det_line, trace_line, 'r--', label=r'$tr^2 = 4 \Delta$')
+        ax.legend()
         cbar = fig.colorbar(c, cax=axd['A'])
         cbar.set_label('Tolerance')
         cbar.ax.yaxis.set_label_position('left')
@@ -83,5 +84,6 @@ for label, ax in axd.items():
         ax.set_xlabel(r'$\tau_{dur} (s)$')
         if label == 'B':
             ax.set_ylabel(r'$I_{app}$')
+            
 plt.savefig('figures/figure2/figure2.png', dpi=600)
 plt.savefig('figures/figure2/figure2.tiff', dpi=600)
