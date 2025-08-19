@@ -1,14 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import csv as csv
-import networkx as nx
-import scipy
 
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from model import left_right_task as lrt, network_model, util, plot_style
+from model import plot_style
 
 # load data
 data_dir = 'figures/figure2/data'
