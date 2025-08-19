@@ -20,8 +20,7 @@ nPairs_counts = np.load('figures/figure4/data_n_states_vs_n_pairs/counts.npy', a
 
 def plot_tr_vs_det(ax):
     c = ax.pcolormesh(determinant_mesh, trace_mesh, tr_det_counts.reshape(trace_mesh.shape), shading='auto')
-    ax.set_xlabel('Determinant (log scale)')
-    ax.set_ylabel('Trace (log scale)')
+    ax.set(ylabel=r'Trace', xlabel=r'Determinant $\Delta$')
     ax.set_xscale('symlog')
     ax.set_yscale('symlog')
     
