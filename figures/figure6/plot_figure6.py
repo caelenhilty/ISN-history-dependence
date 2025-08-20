@@ -258,9 +258,9 @@ axd = fig.subplot_mosaic(
 )
 # add labels to axes
 label_dict = {l: l for l in axd.keys()}
-label_dict['D'] = 'D1'
-label_dict['d'] = 'D2'
-label_dict['b'] = 'D3'
+label_dict['D'] = f'D1      r = {reliabilities[indices[0]]:.2f}'
+label_dict['d'] = f'D2      r = {reliabilities[indices[1]]:.2f}'
+label_dict['b'] = f'D3      r = {reliabilities[indices[2]]:.2f}'
 label_dict['E'] = 'E1'
 label_dict['e'] = 'E2'
 label_dict['i'] = 'E3'
@@ -301,4 +301,5 @@ for i, FSM in enumerate(FSMs):
     pos = nx.spring_layout(FSM, seed=1) if i == 1 else nx.kamada_kawai_layout(FSM)
     plot_FSM(FSM, e_axes[i], node_size=200, connection_map={'L': 'arc3,rad=0.1', 'R': 'arc3,rad=0.2'}, pos=pos)
     
+plt.savefig('figures/figure6/figure6_raw.png')
 plt.savefig('figures/figure6/figure6_raw.tiff')
