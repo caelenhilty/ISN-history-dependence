@@ -72,6 +72,6 @@ if __name__ == "__main__":
         print(f"\nFinished running for CV={CV:.2f}")
     
     # also run for CV = 0.00
-    # os.makedirs(Path(output_dir + '/CV_0.00'), exist_ok=True)
-    # run_sweep(0.0, 1)  # only one network for CV = 0.00
+    os.makedirs(Path(output_dir + '/CV_0.00'), exist_ok=True)
+    run_sweep(0.0, 1)  # only one network for CV = 0.00
 
