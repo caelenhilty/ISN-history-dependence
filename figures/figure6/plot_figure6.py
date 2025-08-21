@@ -258,9 +258,9 @@ axd = fig.subplot_mosaic(
 )
 # add labels to axes
 label_dict = {l: l for l in axd.keys()}
-label_dict['D'] = f'D1      r = {reliabilities[indices[0]]:.2f}'
-label_dict['d'] = f'D2      r = {reliabilities[indices[1]]:.2f}'
-label_dict['b'] = f'D3      r = {reliabilities[indices[2]]:.2f}'
+label_dict['D'] = f'D1      R = {reliabilities[indices[0]]:.2f}'
+label_dict['d'] = f'D2      R = {reliabilities[indices[1]]:.2f}'
+label_dict['b'] = f'D3      R = {reliabilities[indices[2]]:.2f}'
 label_dict['E'] = 'E1'
 label_dict['e'] = 'E2'
 label_dict['i'] = 'E3'
@@ -272,7 +272,7 @@ for label, ax in axd.items():
 # plot 7A: stim sweep
 c = plot_reliabilities(axd['A'], data_dir)
 cbar = fig.colorbar(c, cax=axd['x'], location='bottom', aspect=20)
-cbar.set_label('Reliability')
+cbar.set_label('Reliability (R)')
 for i, sample in enumerate(samples):
     dx = dur_mesh_7A[sample[1] + 1, sample[0] + 1] - dur_mesh_7A[sample[1], sample[0]]
     draw_rect_pcolormesh(axd['A'], sample[0], sample[1], dur_mesh_7A, amp_mesh_7A, 
