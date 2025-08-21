@@ -22,8 +22,8 @@ def trial(i, CV, pset, data_dir):
 if __name__ == '__main__':
     _, pset, _, _, _, _ = util.load_fiducial_network()
 
-    data_dir = 'figures/figure8/backup'
-    output_dir = util.make_data_folder(data_dir, name='raw_reliabilities')
+    data_dir = 'figures/figure8/data_3'
+    output_dir = util.make_data_folder(data_dir, name='state_counts')
     CVs = [0.05, 0.5, 1.0, 1.75]
 
     def yield_next_task():
