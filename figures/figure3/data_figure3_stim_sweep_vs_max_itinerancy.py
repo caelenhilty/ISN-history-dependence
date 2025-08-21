@@ -21,7 +21,7 @@ def trial(amp, dur, states):
 
 if __name__ == '__main__':
     # parameter sweep setup
-    n = 2
+    n = 30
     amp_range = np.logspace(np.log10(pset[-2]), 2, n) # amplitude should be > thetaE
     dur_range = np.linspace(0, 0.05, n)
     dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration on x-axis
