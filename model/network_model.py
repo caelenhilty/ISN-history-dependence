@@ -809,7 +809,7 @@ def get_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_d
                 G.add_edge(i+1, -1) # always use -1 for unstable states (will always end up as a sink)
                 # don't add to the states list -- don't want to simulate unstable states
 
-        return G, unstable_states
+    return G, unstable_states
     
 def longest_path(G):
     """Find length of the longest path in G.
