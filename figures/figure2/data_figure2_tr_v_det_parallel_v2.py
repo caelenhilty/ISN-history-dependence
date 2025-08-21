@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from model import util, left_right_task as lrt, network_model
 
 # core parameters
-rE_target = 10
-rI_target = 5
+rE_target = 5
+rI_target = 10
 thetaE = 5.34
 thetaI = 82.43
 
@@ -68,8 +68,8 @@ def trial(stim_amps, stim_durs, WEE, WEI, WIE, WII):
 if __name__ == '__main__':
     # outer loop over parameters
     n = 50
-    traces = np.logspace(0, 5, n) * -1
-    determinants = np.logspace(5, 7, n)
+    traces = np.logspace(0, 3, n) * -1
+    determinants = np.logspace(1, 6, n)
     trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
     trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
     areas = np.zeros_like(trace_mesh_)

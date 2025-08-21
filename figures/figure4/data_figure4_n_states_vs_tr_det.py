@@ -13,7 +13,7 @@ rE_target = 5
 rI_target = 10
 thetaE = 5.34
 thetaI = 82.43
-numPairs = 5
+numPairs = 9
 max_duration = 12
 dt = 1e-5
 
@@ -34,8 +34,8 @@ if __name__ == '__main__':
     
     # outer loop over parameters
     n = 30
-    traces = np.logspace(0, 5, n) * -1
-    determinants = np.logspace(5, 7, n)
+    traces = np.logspace(0, 3, n) * -1
+    determinants = np.logspace(1, 6, n)
     trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
     trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
     
@@ -52,7 +52,7 @@ if __name__ == '__main__':
             WEE_mesh[i], WEI_mesh[i], WIE_mesh[i], WII_mesh[i] = np.nan, np.nan, np.nan, np.nan
     
     print(f'Number of NaN values: {np.sum(np.isnan(WEE_mesh))}')
-    
+
     # define task generator
     def yield_next_task():
         for WEE, WEI, WIE, WII in zip(WEE_mesh, WEI_mesh, WIE_mesh, WII_mesh):
@@ -85,5 +85,7 @@ if __name__ == '__main__':
     # quick plot
     plt.figure(figsize=(10, 6))
     plt.pcolormesh(trace_mesh, determinant_mesh, results.reshape(trace_mesh.shape), shading='auto')
+    plt.xscale('log')
+    plt.yscale('symlog')
     plt.colorbar(label='Number of stable states')
     plt.savefig(data_dir + '/counts.png', dpi=300)
