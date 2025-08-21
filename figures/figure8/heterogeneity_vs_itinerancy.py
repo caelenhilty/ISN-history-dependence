@@ -14,8 +14,8 @@ Wji, pset, _, _, _, _ = util.load_fiducial_network()
 Wji_means = [np.mean(w[np.eye(w.shape[0], dtype=bool) == False]) for w in Wji]
 
 # task parameters
-rE_target = 10
-rI_target = 5
+rE_target = 5
+rI_target = 10
 max_duration = 6
 dt = 1e-5
 
