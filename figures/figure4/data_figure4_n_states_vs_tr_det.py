@@ -34,8 +34,8 @@ if __name__ == '__main__':
     
     # outer loop over parameters
     n = 30
-    traces = np.logspace(0, 3, n) * -1
-    determinants = np.logspace(1, 6, n)
+    traces = np.logspace(0, 4, n) * -1
+    determinants = np.logspace(4, 6, n)
     trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
     trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
     
@@ -84,8 +84,15 @@ if __name__ == '__main__':
     
     # quick plot
     plt.figure(figsize=(10, 6))
-    plt.pcolormesh(trace_mesh, determinant_mesh, results.reshape(trace_mesh.shape), shading='auto')
+    plt.pcolormesh(determinant_mesh, trace_mesh, results.reshape(trace_mesh.shape), shading='auto')
     plt.xscale('log')
     plt.yscale('symlog')
+    det_line = determinant_mesh[:,0]
+    trace_line = -2*np.sqrt(det_line)
+    idx_max = np.argmax(trace_line < np.min(trace_mesh)) if np.min(trace_line) < np.min(trace_mesh) else -1
+    idx_min = np.argmax(trace_line > np.max(trace_mesh)) if np.max(trace_line) > np.max(trace_mesh) else 0
+    det_line = det_line[idx_min:idx_max]
+    trace_line = trace_line[idx_min:idx_max]
+    plt.plot(det_line, trace_line, 'r--', label=r'$tr^2 = 4 \Delta$')
     plt.colorbar(label='Number of stable states')
     plt.savefig(data_dir + '/counts.png', dpi=300)
