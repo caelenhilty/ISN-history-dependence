@@ -68,8 +68,8 @@ def trial(stim_amps, stim_durs, WEE, WEI, WIE, WII):
 if __name__ == '__main__':
     # outer loop over parameters
     n = 50
-    traces = np.logspace(0, 3, n) * -1
-    determinants = np.logspace(1, 6, n)
+    traces = np.logspace(0, 4, n) * -1
+    determinants = np.logspace(4, 6, n)
     trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
     trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
     areas = np.zeros_like(trace_mesh_)
