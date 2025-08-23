@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from model import network_model, util
 
 # core parameters
-rE_target = 10
-rI_target = 5
+rE_target = 5
+rI_target = 10
 thetaE = 5.34
 thetaI = 82.43
 
