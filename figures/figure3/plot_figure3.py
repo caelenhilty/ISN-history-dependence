@@ -16,11 +16,11 @@ longest_paths = np.load(data_dir + '/longest_paths.npy')
 
 amp_dur_pairs = np.array(list(zip(amp_mesh.ravel(), dur_mesh.ravel())))
 longest_idxs = np.argsort(longest_paths)[::-1]
-
+amp, dur = float(amp_dur_pairs[longest_idxs[0]][0]), float(amp_dur_pairs[longest_idxs[1]][1])
 
 # make an example trace
 # find all states
-Wji, pset, _, _, _, _ = util.load_fiducial_network(True)
+Wji, pset, _, _, _, _ = util.load_fiducial_network()
 rE_target = 5
 rI_target = 10
 max_duration = 6
@@ -34,8 +34,9 @@ states = [np.array(state) for state in states[unique_idxs]]  # convert to list
 print("Found states")
 
 # make the sample network (subplot C)
-amp, dur = 19.85085909119401, 0.001724137931034483
-G, _ = network_model.get_state_transition_graph(Wji, pset, amp, dur, Eactive=rE_target, Iactive=rI_target, max_duration=max_duration, dt=dt, states=states)
+G, _ = network_model.get_state_transition_graph(Wji, pset, amp, dur, 
+                                                Eactive=rE_target, Iactive=rI_target, 
+                                                max_duration=max_duration, dt=dt, states=states)
 
 # sample trace (subplot A)
 equil_duration = 2
