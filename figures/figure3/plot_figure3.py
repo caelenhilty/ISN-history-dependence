@@ -16,7 +16,7 @@ longest_paths = np.load(data_dir + '/longest_paths.npy')
 
 amp_dur_pairs = np.array(list(zip(amp_mesh.ravel(), dur_mesh.ravel())))
 longest_idxs = np.argsort(longest_paths)[::-1]
-amp, dur = float(amp_dur_pairs[longest_idxs[0]][0]), float(amp_dur_pairs[longest_idxs[1]][1])
+amp, dur = 19.85085909119401, 0.001724137931034483
 
 # make an example trace
 # find all states
