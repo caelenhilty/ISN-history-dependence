@@ -38,4 +38,7 @@ if __name__ == '__main__':
     pool.join()
     
     results = np.array(results)
+
+    cv_0_results = trial(1, 0.00, pset, data_dir)
+    results = np.vstack([np.array(results), cv_0_results])
     np.save(output_dir + '/state_counts.npy', results)
