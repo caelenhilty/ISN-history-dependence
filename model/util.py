@@ -102,7 +102,7 @@ def make_target(rE:float, rI:float, tr:float, det:float, thetaE:float, thetaI:fl
         F[0] = rE + ((1-WII)*thetaE + WIE*thetaI)/d
         F[1] = rI + ((1-WEE)*thetaI + WEI*thetaE)/d
         F[2] = tr - ((WEE-1)/tauE + (WII-1)/tauI)
-        F[3] = det - ((WEE-1)*(WII-1) - WEI*WIE)/(tauE*tauI)
+        F[3] = det - d / (tauE*tauI)
         return F
     return target
 
