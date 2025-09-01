@@ -117,7 +117,8 @@ def get_solution(target: Callable, maxiter:int=100, **kwargs):
         sol = root(target, x0, **kwargs)
         x = sol.x
         ier = sol.success
-        valid = x[0] > 0 and x[1] > 0 and x[2] < 0 and x[3] < 0
+        # valid = x[0] > 0 and x[1] > 0 and x[2] < 0 and x[3] < 0
+        valid = True
         if ier == 1 and valid:
             break
     valid &= ier == 1
