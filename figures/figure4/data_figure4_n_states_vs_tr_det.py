@@ -34,8 +34,8 @@ if __name__ == '__main__':
     
     # outer loop over parameters
     n = 30
-    traces = np.logspace(0, 5, n) * -1
-    determinants = np.logspace(5.6, 6.5, n)
+    traces = np.logspace(0, 3.5, n) * -1
+    determinants = np.logspace(1, 6.5, n)
     trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
     trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
     
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     WII_mesh = np.zeros_like(trace_mesh_)
     for i, (tr, det) in enumerate(tqdm(zip(trace_mesh_, determinant_mesh_), total=trace_mesh_.size, mininterval=1)):
         target = util.make_target(rE_target, rI_target, tr, det, thetaE, thetaI)
-        x, valid = util.get_solution(target, method='hybr')
+        x, valid = util.get_solution(target, method='hybr', maxiter=1000)
         if valid:
             WEE_mesh[i], WEI_mesh[i], WIE_mesh[i], WII_mesh[i] = x
         else:

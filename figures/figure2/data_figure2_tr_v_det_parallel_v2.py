@@ -42,14 +42,15 @@ def bistable_no_depression(stimulus_duration, stimulus_amplitude,
         rI *= -1
     return rE, rI    
     
-def trial(stim_amps, stim_durs, WEE, WEI, WIE, WII):
-    area = 0
-    for amp, dur in zip(stim_amps, stim_durs):
+def trial(stim_amps, stim_durs, WEE, WEI, WIE, WII) -> np.array:
+    # store if turned on then off in a binary array
+    response = np.zeros((len(stim_amps)))
+    for i, (amp, dur) in enumerate(zip(stim_amps, stim_durs)):
         rE, rI = bistable_no_depression(dur, amp, 
                                         dt, max_duration,
                                         WEE, WEI, WIE, WII, thetaE, thetaI)
         if np.any(rE < 0) or rE[-1] == 100 or rI[-1] == 100: # if not stable, go to next stimulus
-            return 0
+            continue
         on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
         # run again
         if on:
@@ -58,18 +59,17 @@ def trial(stim_amps, stim_durs, WEE, WEI, WIE, WII):
                                             WEE, WEI, WIE, WII, thetaE, thetaI, 
                                             initial_conditions=[rE[-1], rI[-1]])
             if np.any(rE < 0): # if not stable, go to next stimulus
-                return 0
-            on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
-            if not on:
-                area += 1
                 continue
-    return area
+            on = ((rE[-1] > 0.1) and (rI[-1] > 0.1)) # check if ON
+            if not on:
+                response[i] = 1
+    return response
 
 if __name__ == '__main__':
     # outer loop over parameters
     n = 50
-    traces = np.logspace(0, 4, n) * -1
-    determinants = np.logspace(4, 6, n)
+    traces = np.logspace(0, 4.5, n) * -1
+    determinants = np.logspace(5, 6.5, n)
     trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
     trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
     areas = np.zeros_like(trace_mesh_)
