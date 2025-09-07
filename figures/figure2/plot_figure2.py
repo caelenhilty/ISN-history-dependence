@@ -8,8 +8,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from model import plot_style
 
 # load data
-data_dir = 'figures/figure2/data'
-areas = np.load(data_dir + '/areas.npy', allow_pickle=True)
+data_dir = 'figures/figure2/data_3'
+raw_areas = np.load(data_dir + '/areas.npy', allow_pickle=True)
+# areas has shape (num_simulations, num_amp, num_dur)
+# flatten last two dimensions
+areas = raw_areas.reshape(raw_areas.shape[0], -1)
+areas = np.mean(areas, axis=1) # mean over stimuli
 traces = np.load(data_dir + '/trace_mesh.npy', allow_pickle=True)
 determinants = np.load(data_dir + '/determinant_mesh.npy', allow_pickle=True)
 n = int(np.sqrt(len(areas)))
@@ -18,6 +22,7 @@ determinant_mesh = determinants.reshape((n, n))
 WEE_mesh = np.load(data_dir + '/WEE_mesh.npy', allow_pickle=True)
 areas = np.where(np.isnan(WEE_mesh), np.nan, areas)
 
+data_dir = 'figures/figure2/data'
 stimulus_durations = np.load(data_dir + '/stim_durations.npy', allow_pickle=True)
 stimulus_amplitudes = np.load(data_dir + '/stim_amplitudes.npy', allow_pickle=True)
 dur_mesh, amp_mesh = np.meshgrid(stimulus_durations, stimulus_amplitudes)
@@ -32,7 +37,7 @@ fold_areas = norm_areas.reshape((n, n)) * (Lx * Ly) # Area in fold-fold change s
 tolerance = np.sqrt(fold_areas / np.pi) # radius expresses the fold change in terms of a circle's radius
 
 # samples
-selected_points = [(1, 3), (25, 20),(10, 35)] # adjust to match data_figure2_stim_v_flip_flop.py
+selected_points = [(1, 3), (10, 15),(10, 25)] # adjust to match data_figure2_stim_v_flip_flop.py
 
 # plot
 px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
@@ -75,7 +80,7 @@ for label, ax in axd.items():
     elif label in ['B', 'C', 'D']:  
         idx = ord(label) - ord('B')
         x, y = selected_points[idx][0], selected_points[idx][1]
-        sweep_results = np.load(data_dir + f'/sample_({x},{y})_stim_sweep.npy', allow_pickle=True)
+        sweep_results = raw_areas.reshape(n, n, m, m)[x, y, :, :]
         ax.set_title(label + f"    tolerance = {tolerance[x, y]:.1f}", loc='left', fontweight='bold')
         c = ax.pcolormesh(dur_mesh, amp_mesh, sweep_results.reshape((m, m)), shading='auto', cmap='viridis')
         ax.set_xscale('log')

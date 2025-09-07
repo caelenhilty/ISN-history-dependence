@@ -58,7 +58,7 @@ def trial(stim_amps, stim_durs, WEE, WEI, WIE, WII, thetaE, thetaI):
                                             initial_conditions=[rE[-1], rI[-1]])
             if np.any(rE < 0): # if not stable, go to next stimulus
                 continue
-            on = (int((rE[-1] > 0.1) and (rI[-1] > 0.1))) # check if ON
+            on = (rE[-1] > 0.1) and (rI[-1] > 0.1) # check if ON
             if not on:
                 area += 1
                 continue

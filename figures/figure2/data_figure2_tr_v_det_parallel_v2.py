@@ -87,11 +87,8 @@ if __name__ == '__main__':
             WEE_mesh[i], WEI_mesh[i], WIE_mesh[i], WII_mesh[i] = np.nan, np.nan, np.nan, np.nan
             
     # count nan values
-    try:
-        assert np.sum(np.isnan(WEE_mesh)) == 0
-    except AssertionError:
-        print("Warning: NaN values found in parameter mesh.")
-        
+    print(f"Warning: {np.sum(np.isnan(WEE_mesh))} NaN values found in parameter mesh.")
+
     # inner loop over stimulus parameters
     m = 50
     stimulus_durations = np.logspace(-3, 0, m)
@@ -123,3 +120,5 @@ if __name__ == '__main__':
     np.save(data_dir + '/trace_mesh.npy', trace_mesh_)
     np.save(data_dir + '/determinant_mesh.npy', determinant_mesh_)
     np.save(data_dir + '/areas.npy', areas)
+    np.save(data_dir + '/stim_durations.npy', stimulus_durations)
+    np.save(data_dir + '/stim_amplitudes.npy', stimulus_amplitudes)
