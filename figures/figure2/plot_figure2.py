@@ -25,16 +25,33 @@ areas = np.where(np.isnan(WEE_mesh), np.nan, areas)
 data_dir = 'figures/figure2/data'
 stimulus_durations = np.load(data_dir + '/stim_durations.npy', allow_pickle=True)
 stimulus_amplitudes = np.load(data_dir + '/stim_amplitudes.npy', allow_pickle=True)
+m = len(stimulus_durations)
 dur_mesh, amp_mesh = np.meshgrid(stimulus_durations, stimulus_amplitudes)
 
-# covert areas to tolerance
-m = len(stimulus_durations)
-n_stimuli = m ** 2
-norm_areas = areas / n_stimuli
-Lx = np.max(stimulus_durations)/np.min(stimulus_durations)
-Ly = np.max(stimulus_amplitudes)/np.min(stimulus_amplitudes)
-fold_areas = norm_areas.reshape((n, n)) * (Lx * Ly) # Area in fold-fold change space
-tolerance = np.sqrt(fold_areas / np.pi) # radius expresses the fold change in terms of a circle's radius
+# convert areas to tolerance
+tolerances = []
+for data in raw_areas:
+    area = np.sum(data)
+    if area == 0:
+        tolerances.append(0)
+        continue
+    mask = np.array(data == 1).reshape(dur_mesh.shape)
+    dur_max = np.max(dur_mesh[mask])
+    dur_min = np.min(dur_mesh[mask])
+    Lx = dur_max / dur_min
+    amp_max = np.max(amp_mesh[mask])
+    amp_min = np.min(amp_mesh[mask])
+    Ly = amp_max / amp_min
+    
+    get_idx = lambda arr, val: np.argmin(np.abs(arr - val))
+    n_stimuli = (get_idx(stimulus_durations, dur_max) - get_idx(stimulus_durations, dur_min) + 1) * \
+                (get_idx(stimulus_amplitudes, amp_max) - get_idx(stimulus_amplitudes, amp_min) + 1)
+    
+    area_norm = area / n_stimuli
+    fold_area = area_norm * Lx * Ly     # convert area to fold-fold change
+    tolerances.append(2*np.sqrt(fold_area/np.pi))   # diameter of the "circle" in fold-fold space
+
+tolerance = np.array(tolerances).reshape((n,n))
 
 # samples
 selected_points = [(1, 3), (10, 15),(10, 25)] # adjust to match data_figure2_stim_v_flip_flop.py
