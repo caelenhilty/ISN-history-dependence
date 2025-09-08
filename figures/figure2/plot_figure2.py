@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from model import plot_style
 
 # load data
-data_dir = 'figures/figure2/data_3'
+data_dir = 'figures/figure2/data_4'
 raw_areas = np.load(data_dir + '/areas.npy', allow_pickle=True)
 # areas has shape (num_simulations, num_amp, num_dur)
 # flatten last two dimensions
@@ -22,7 +22,6 @@ determinant_mesh = determinants.reshape((n, n))
 WEE_mesh = np.load(data_dir + '/WEE_mesh.npy', allow_pickle=True)
 areas = np.where(np.isnan(WEE_mesh), np.nan, areas)
 
-data_dir = 'figures/figure2/data'
 stimulus_durations = np.load(data_dir + '/stim_durations.npy', allow_pickle=True)
 stimulus_amplitudes = np.load(data_dir + '/stim_amplitudes.npy', allow_pickle=True)
 m = len(stimulus_durations)
@@ -54,7 +53,7 @@ for data in raw_areas:
 tolerance = np.array(tolerances).reshape((n,n))
 
 # samples
-selected_points = [(1, 3), (25, 15),(10, 25)] # adjust to match data_figure2_stim_v_flip_flop.py
+selected_points = [(1, 5), (15, 15),(10, 35)] # adjust to match data_figure2_stim_v_flip_flop.py
 
 # plot
 px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
