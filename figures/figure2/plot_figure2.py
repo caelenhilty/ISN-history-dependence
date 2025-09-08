@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from model import plot_style
 
 # load data
-data_dir = 'figures/figure2/data_4'
+data_dir = 'figures/figure2/data'
 raw_areas = np.load(data_dir + '/areas.npy', allow_pickle=True)
 # areas has shape (num_simulations, num_amp, num_dur)
 # flatten last two dimensions
