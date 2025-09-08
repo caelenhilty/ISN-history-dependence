@@ -54,7 +54,7 @@ for data in raw_areas:
 tolerance = np.array(tolerances).reshape((n,n))
 
 # samples
-selected_points = [(1, 3), (10, 15),(10, 25)] # adjust to match data_figure2_stim_v_flip_flop.py
+selected_points = [(1, 3), (25, 15),(10, 25)] # adjust to match data_figure2_stim_v_flip_flop.py
 
 # plot
 px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
