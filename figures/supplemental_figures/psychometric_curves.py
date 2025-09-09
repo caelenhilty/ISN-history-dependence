@@ -55,7 +55,7 @@ plt.figure(figsize=(5, 3), layout='constrained')
 plt.plot(cue_count, good_p_curves.T, color='gray', alpha=0.05)
 log_label = fr'$y = \frac{{{popt[2]:.2f}}}{{1 + e^{{-{popt[0]:.2f}(x - {popt[1]:.2f})}}}}$'
 plt.plot(cue_count, logistic(cue_count, *popt), '-o' ,color='red', linewidth=2, label=log_label)
-lin_label = fr'$y = {popt_linear[1]:.2f}x + {popt_linear[0]:.2f}$'
+lin_label = fr'$y = {popt_linear[0]:.2f}x + {popt_linear[1]:.2f}$'
 plt.plot(cue_count, linear(cue_count, *popt_linear), '-o', color='blue', linewidth=2, label=lin_label)
 plt.xlabel('# of L cues in sequence')
 plt.ylabel('P(choose L)')
