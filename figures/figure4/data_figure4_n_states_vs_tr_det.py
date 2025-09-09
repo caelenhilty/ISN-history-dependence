@@ -33,9 +33,9 @@ if __name__ == '__main__':
     Wji = network_model.makeWji_all_types(np.random.default_rng(), numPairs, Wji_means, np.zeros(4))
     
     # outer loop over parameters
-    n = 30
-    traces = np.logspace(0, 3.5, n) * -1
-    determinants = np.logspace(1, 6.5, n)
+    n = 50
+    traces = np.logspace(0, 4.5, n) * -1
+    determinants = np.logspace(5, 6.5, n)
     trace_mesh, determinant_mesh = np.meshgrid(traces, determinants)
     trace_mesh_, determinant_mesh_ = trace_mesh.ravel(), determinant_mesh.ravel()
     
