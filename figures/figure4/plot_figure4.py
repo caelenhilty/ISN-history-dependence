@@ -9,7 +9,7 @@ from model import plot_style
 
 # load data
 
-tr_det_data_dir = 'figures/figure4/data_n_states_vs_tr_det'
+tr_det_data_dir = 'figures/figure4/data_n_states_vs_tr_det_2'
 tr_det_counts = np.load(tr_det_data_dir + '/counts.npy', allow_pickle=True)
 trace_mesh = np.load(tr_det_data_dir + '/trace_mesh.npy', allow_pickle=True)
 determinant_mesh = np.load(tr_det_data_dir + '/determinant_mesh.npy', allow_pickle=True)
