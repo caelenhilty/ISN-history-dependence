@@ -98,7 +98,7 @@ for label, ax in axd.items():
         x, y = selected_points[idx][0], selected_points[idx][1]
         sweep_results = raw_areas.reshape(n, n, m, m)[x, y, :, :]
         ax.set_title(label + f"    tolerance = {tolerance[x, y]:.1f}", loc='left', fontweight='bold')
-        c = ax.pcolormesh(dur_mesh, amp_mesh, sweep_results.reshape((m, m)), shading='auto', cmap='viridis')
+        c = ax.pcolormesh(dur_mesh, amp_mesh, sweep_results.reshape((m, m)), shading='auto', cmap='binary')
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlabel(r'$\tau_{dur} (s)$')
