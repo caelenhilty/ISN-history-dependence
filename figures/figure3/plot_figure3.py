@@ -16,41 +16,72 @@ longest_paths = np.load(data_dir + '/longest_paths.npy')
 
 amp_dur_pairs = np.array(list(zip(amp_mesh.ravel(), dur_mesh.ravel())))
 longest_idxs = np.argsort(longest_paths)[::-1]
-amp, dur = 19.85085909119401, 0.001724137931034483
+amp, dur = amp_dur_pairs[longest_idxs][0]
+
+states = np.load(data_dir + '/states.npy', allow_pickle=True)
 
 # make an example trace
-# find all states
 Wji, pset, _, _, _, _ = util.load_fiducial_network()
+numPairs = 5
 rE_target = 5
 rI_target = 10
 max_duration = 6
 dt =1e-5
 
-print("Finding states...")
-numPairs = Wji.shape[1]
-states = network_model.get_all_states(Wji, pset, numPairs, rE_target, rI_target, duration = max_duration, dt=dt)
-_, unique_idxs = np.unique(np.round(states, 0), axis=0, return_index=True)  # remove duplicates
-states = [np.array(state) for state in states[unique_idxs]]  # convert to list
-print("Found states")
-
 # make the sample network (subplot C)
-G, _ = network_model.get_state_transition_graph(Wji, pset, amp, dur, 
+G, states, unstable_states, edge_list, edge_rates, IappE = network_model.get_detailed_state_transition_graph(Wji, pset, amp, dur, 
                                                 Eactive=rE_target, Iactive=rI_target, 
                                                 max_duration=max_duration, dt=dt, states=states)
+longest_path = network_model.get_longest_path(G)
+longest_edges = [edge for edge in G.edges() if edge[0] in longest_path and edge[1] in longest_path]
+pre_states = [edge[0] for edge in longest_edges]
+post_states = [edge[1] for edge in longest_edges]
+
+# r0_index = [pre for pre in pre_states if pre not in post_states]
+# assert len(r0_index) == 1
+# assert r0_index[0] != -1  # make sure the initial state is not unstable
+# r0 = states[r0_index[0]-1]
+# print(r0_index[0]-1)
 
 # sample trace (subplot A)
-equil_duration = 2
-total_duration = 11*equil_duration + 10*dur
-equil_tsteps = int(total_duration/dt)
-IappE = np.zeros((numPairs, equil_tsteps))
-for i in range(10):
-    IappE[:, int((equil_duration * (i+1) + dur*i)/dt):int((equil_duration * (i+1) + dur*(i+1))/dt)] = amp
-IappI = np.copy(IappE)
+# equil_duration = 4
+# total_duration = 11*equil_duration + 10*dur
+# equil_tsteps = int(total_duration/dt)
+# IappE = np.zeros((numPairs, equil_tsteps))
+# for i in range(10):
+#     IappE[:, int((equil_duration * (i+1) + dur*i)/dt):int((equil_duration * (i+1) + dur*(i+1))/dt)] = amp
+# IappI = np.copy(IappE)
 
-r0 = states[27]
-rates = network_model.simulateISN(Wji, numPairs, r0, pset, IappE, IappI, dt, total_duration)
-raw_time_len = min(rates.shape[-1], IappE.shape[-1])
-rates, IappE = rates[:,:,:raw_time_len], IappE[:, :raw_time_len]
+# rates = network_model.simulateISN(Wji, numPairs, r0, pset, IappE, IappI, dt, total_duration)
+# raw_time_len = min(rates.shape[-1], IappE.shape[-1])
+# rates, IappE = rates[:,:,:raw_time_len], IappE[:, :raw_time_len]
+
+# stitch together longest path from edge rates
+rates = np.zeros((numPairs, 2, 0))
+# first sort longest_edges by their order in the path: start by finding the initial state
+r0_index = [pre for pre in pre_states if pre not in post_states][0]
+assert r0_index != -1  # make sure the initial state is not unstable
+current_state = r0_index
+sorted_longest_edges = []
+while True:
+    next_edge = [edge for edge in longest_edges if edge[0] == current_state]
+    if len(next_edge) == 0:
+        break
+    next_edge = next_edge[0]
+    sorted_longest_edges.append(next_edge)
+    current_state = next_edge[1]
+# now stitch together the rates
+for i, edge in enumerate(sorted_longest_edges):
+    # find index of edge in edge_list
+    edge_idx = edge_list.index(edge)
+    edge_rate = edge_rates[edge_idx]
+    rates = np.concatenate((rates, edge_rate), axis=-1)
+
+# make IappE for the stitched rates
+raw_time_len = rates.shape[-1]
+IappE = np.tile(IappE[0], len(longest_edges))
+IappE = IappE[:raw_time_len]
+    
 
 def plot_FSM(G, ax):
     weak_components = list(nx.weakly_connected_components(G))
@@ -62,11 +93,13 @@ def plot_FSM(G, ax):
     longest_path = network_model.get_longest_path(G)
     edge_widths = [2 if edge[0] in longest_path and edge[1] in longest_path else 1 for edge in G.edges()]
     
-    nx.draw_networkx_nodes(G, ax=ax, nodelist=longest_path, pos = nx.arf_layout(G, pos=nx.planar_layout(G)), node_color='k',
+    pos = nx.arf_layout(G, pos=nx.planar_layout(G))
+    nx.draw_networkx_nodes(G, ax=ax, nodelist=longest_path, pos = pos, node_color='k',
                         node_size=400)
-    nx.draw_networkx_nodes(G, ax=ax, pos = nx.arf_layout(G, pos=nx.planar_layout(G)), node_color = node_colors)
-    nx.draw_networkx_edges(G, ax=ax, pos = nx.arf_layout(G, pos=nx.planar_layout(G)), arrows=True, 
+    nx.draw_networkx_nodes(G, ax=ax, pos = pos, node_color = node_colors)
+    nx.draw_networkx_edges(G, ax=ax, pos = pos, arrows=True, 
                         edge_color=edge_colors, width=edge_widths)
+    # nx.draw_networkx_labels(G, pos, ax=ax)
     
     ax.spines['bottom'].set_color('red')
     ax.spines['top'].set_color('red') 
@@ -98,7 +131,7 @@ def plot_trace(rates, IappE, ax1, ax2):
         new_rates[2*i + 1] = rates[i, 1]
     # plot firing rates
     vals = ax1.imshow(new_rates[:, :], cmap = 'afmhot', interpolation='nearest', aspect='auto', vmin=0, vmax= int(np.max(new_rates))+1)
-    ax1.set_ylabel("Unit ID")
+    ax1.set_ylabel("Pair ID")
     ax1.set_yticks(np.arange(0.5, 2*numPairs, 2), labels=np.arange(numPairs), minor=False)
     ax1.grid(which='minor', color='k', linestyle='-', linewidth=2)
     ax1.set_xticks(np.arange(0, raw_time_len, int(4/dt)), labels=[])
@@ -107,7 +140,7 @@ def plot_trace(rates, IappE, ax1, ax2):
     # plot Iapp
     x2ticks = np.arange(0, raw_time_len, int(4/dt))
     ax2.set_xticks(x2ticks, labels = np.round(np.linspace(0, raw_time_len*dt, len(x2ticks)), 0))
-    ax2.plot(IappE[0])
+    ax2.plot(IappE)
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("$I_{app}$")
     

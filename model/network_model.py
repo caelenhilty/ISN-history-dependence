@@ -810,7 +810,95 @@ def get_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_d
                 # don't add to the states list -- don't want to simulate unstable states
 
     return G, unstable_states
+
+def get_detailed_state_transition_graph(Wji, pset, stim_amplitude, stim_duration, equil_duration = 2, dt = 1e-5,
+                               Eactive = 5, Iactive = 10, max_duration=12, states=None):
+    """ Creates a graph of the state transitions elicited by the specified stimulus.
+    First, finds all states, then performs one simulation per state to find all edges.
     
+    Parameters
+    ----------
+    Wji : np.ndarray
+        The weight matrix of the network.
+    pset : dict
+        The parameter set for the simulation.
+    stim_amplitude : float
+        The amplitude of the stimulus.
+    stim_duration : float
+        The duration of the stimulus.
+    equil_duration : float, optional
+        The duration of the equilibration period (default is 2 seconds).
+    dt : float, optional
+        The time step for the simulation (default is 1e-5 seconds).
+    Eactive : float, optional
+        The initial firing rate of the excitatory population (default is 5 Hz).
+    Iactive : float, optional
+        The initial firing rate of the inhibitory population (default is 10 Hz).
+    max_duration : float, optional
+        The duration spent allowing the network to reach a steady state during the initial state search.
+    states : optional
+        If states are passed, will skip the state-finding step (often the slowest part)
+
+    Returns
+    -------
+    nx.DiGraph
+        A directed graph representing the state transitions of the network.
+    """
+    # get all states
+    numPairs = Wji.shape[1]
+    if states is None:
+        states = get_all_states(Wji, pset, numPairs, Eactive, Iactive, duration = max_duration, dt=dt)
+        _, unique_idxs = np.unique(np.round(states, 0), axis=0, return_index=True)  # remove duplicates
+        states = [np.array(state) for state in states[unique_idxs]]  # convert to list
+
+    # edge simulation setup
+    duration = 2*equil_duration + stim_duration
+    IappE = np.zeros((numPairs, int(duration/dt)))
+    IappE[::, int(equil_duration/dt):int((equil_duration + stim_duration)/dt)] = stim_amplitude  # apply stimulus to all pairs
+    IappI = np.copy(IappE)  # same for inhibitory units
+
+    # construct graph
+    G = nx.DiGraph()
+    unstable_states = False
+    edge_list = []
+    edge_rates = []
+    for i, state in enumerate(states):
+        G.add_node(i+1) # won't add repeated states
+
+        rates = simulateISN(Wji, numPairs, state, pset,
+                            IappE, IappI,
+                            dt=dt, duration=duration)
+        final_state = rates[:, :, -1]
+        
+        # no self loops (instead indicated by out-degree zero)
+        if np.allclose(final_state, state, rtol=0, atol=0.5):
+            continue
+        
+        # identify final_state
+        for match_idx, match_state in enumerate(states):
+            found = np.allclose(final_state, match_state, rtol=0, atol=0.5)
+            if found:
+                G.add_edge(i+1, match_idx+1) # adds nodes if necessary
+                edge_list.append((i+1, match_idx+1))  # add edge to existing state
+                edge_rates.append(rates)
+                break
+        if not found:
+            # check stability
+            stable = np.allclose(rates[:, :, int((duration-1)/dt):-1], rates[:, :, -1][..., np.newaxis], rtol=0, atol=0.1) and np.all(final_state < 100)
+            if stable:
+                G.add_edge(i+1, len(states) + 1)
+                edge_list.append((i+1, len(states) + 1))  # add edge to new state
+                states.append(final_state)  # add new state if not found in the existing states
+                edge_rates.append(rates)
+            else:
+                unstable_states = True
+                G.add_edge(i+1, -1) # always use -1 for unstable states (will always end up as a sink)
+                edge_list.append((i+1, -1))  # add edge to unstable state
+                edge_rates.append(rates)
+                # don't add to the states list -- don't want to simulate unstable states
+
+    return G, states, unstable_states, edge_list, edge_rates, IappE
+
 def longest_path(G):
     """Find length of the longest path in G.
     Only works for graphs where every node has out-degree of 1 (as in the state transition graph).

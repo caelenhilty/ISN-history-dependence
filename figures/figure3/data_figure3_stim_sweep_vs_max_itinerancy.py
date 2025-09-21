@@ -27,13 +27,8 @@ if __name__ == '__main__':
     dur_mesh, amp_mesh = np.meshgrid(dur_range, amp_range) # amp on y-axis, duration on x-axis
     dur_flat, amp_flat = dur_mesh.ravel(), amp_mesh.ravel()
     
-    # find all states
-    print("Finding states...")
-    numPairs = Wji.shape[1]
-    states = network_model.get_all_states(Wji, pset, numPairs, rE_target, rI_target, duration = max_duration, dt=dt)
-    _, unique_idxs = np.unique(np.round(states, 0), axis=0, return_index=True)  # remove duplicates
-    states = [np.array(state) for state in states[unique_idxs]]  # convert to list
-    print("Found states")
+    # load all states
+    states = np.load('figures/figure3/data/states.npy', allow_pickle=True)
 
     print(f"Starting {len(amp_flat)} trials with {mp.cpu_count()} processes...")
     try:
