@@ -29,7 +29,7 @@ def trial(Wji, amp, dur, states):
     return network_model.longest_path(G)
 
 if __name__ == "__main__":
-    data_dir = 'figures/figure8/data_3'
+    data_dir = 'figures/figure7/data_3'
     output_dir = util.make_data_folder(data_dir, name='longest_paths')
     CVs = [0.05, 0.50, 1.00, 1.75]
 

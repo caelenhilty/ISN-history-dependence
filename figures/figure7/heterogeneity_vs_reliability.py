@@ -33,7 +33,7 @@ def run_model(Wji, dur, amp):
     return reliability
 
 if __name__ == "__main__":
-    data_dir = 'figures/figure8/backup'
+    data_dir = 'figures/figure7/backup'
     output_dir = util.make_data_folder(data_dir, name='raw_reliabilities')
     CVs = [0.05]
 

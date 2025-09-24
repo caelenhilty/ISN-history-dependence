@@ -46,7 +46,7 @@ if __name__ == "__main__":
     pool.join()
 
     # Save the results
-    data_dir = util.make_data_folder("figures/figure8")
+    data_dir = util.make_data_folder("figures/figure7")
     for i, CV in enumerate(np.unique(CVs)):
         os.makedirs(data_dir + f'/CV_{CV:.2f}', exist_ok=True)
         for j, Wji in enumerate(results[i * n_networks : (i + 1) * n_networks]):
