@@ -32,32 +32,12 @@ dt =1e-5
 G, states, unstable_states, edge_list, edge_rates, IappE = network_model.get_detailed_state_transition_graph(Wji, pset, amp, dur, 
                                                 Eactive=rE_target, Iactive=rI_target, 
                                                 max_duration=max_duration, dt=dt, states=states)
+
 longest_path = network_model.get_longest_path(G)
 longest_edges = [edge for edge in G.edges() if edge[0] in longest_path and edge[1] in longest_path]
 pre_states = [edge[0] for edge in longest_edges]
 post_states = [edge[1] for edge in longest_edges]
 
-# r0_index = [pre for pre in pre_states if pre not in post_states]
-# assert len(r0_index) == 1
-# assert r0_index[0] != -1  # make sure the initial state is not unstable
-# r0 = states[r0_index[0]-1]
-# print(r0_index[0]-1)
-
-# sample trace (subplot A)
-# equil_duration = 4
-# total_duration = 11*equil_duration + 10*dur
-# equil_tsteps = int(total_duration/dt)
-# IappE = np.zeros((numPairs, equil_tsteps))
-# for i in range(10):
-#     IappE[:, int((equil_duration * (i+1) + dur*i)/dt):int((equil_duration * (i+1) + dur*(i+1))/dt)] = amp
-# IappI = np.copy(IappE)
-
-# rates = network_model.simulateISN(Wji, numPairs, r0, pset, IappE, IappI, dt, total_duration)
-# raw_time_len = min(rates.shape[-1], IappE.shape[-1])
-# rates, IappE = rates[:,:,:raw_time_len], IappE[:, :raw_time_len]
-
-# stitch together longest path from edge rates
-rates = np.zeros((numPairs, 2, 0))
 # first sort longest_edges by their order in the path: start by finding the initial state
 r0_index = [pre for pre in pre_states if pre not in post_states][0]
 assert r0_index != -1  # make sure the initial state is not unstable
@@ -70,7 +50,9 @@ while True:
     next_edge = next_edge[0]
     sorted_longest_edges.append(next_edge)
     current_state = next_edge[1]
-# now stitch together the rates
+
+# stitch together longest path from edge rates
+rates = np.zeros((numPairs, 2, 0))
 for i, edge in enumerate(sorted_longest_edges):
     # find index of edge in edge_list
     edge_idx = edge_list.index(edge)
@@ -139,7 +121,7 @@ def plot_trace(rates, IappE, ax1, ax2):
 
     # plot Iapp
     x2ticks = np.arange(0, raw_time_len, int(4/dt))
-    ax2.set_xticks(x2ticks, labels = np.round(np.linspace(0, raw_time_len*dt, len(x2ticks)), 0))
+    ax2.set_xticks(x2ticks, labels = [f'{s:.0f}' for s in np.round(np.linspace(0, raw_time_len*dt, len(x2ticks)), 0)])
     ax2.plot(IappE)
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("$I_{app}$")
