@@ -90,32 +90,6 @@ rates, IappE = make_trace(Wji, pset, amp, dur, l_kernel, r_kernel, sequence = "R
 raw_time_len = min(rates.shape[-1], IappE.shape[-1])
 rates, IappE = rates[:,:,:raw_time_len], IappE[:, :raw_time_len]
 
-# plotting functions
-def make_trace(Wji, pset, amp, dur, l_kernel, r_kernel, sequence = "RRLLLR", dt=1e-5):
-    test_duration = 12
-    r0_test = np.zeros((numPairs, 2))
-    rates = network_model.simulateISN(Wji, numPairs, r0_test, pset, 
-                              np.zeros((numPairs, int(test_duration/dt))), np.zeros((numPairs, int(test_duration/dt))), 
-                              dt, test_duration)
-    stable = np.allclose(rates[:,:,int((test_duration-1-2*dt)/dt)], rates[:,:,-1], atol=0.1, rtol=0., equal_nan=False) and \
-        np.allclose(rates[:,:,int(-0.1/dt)], rates[:,:,-1], atol=0.1, rtol=0., equal_nan=False) and \
-        np.allclose(rates[:,:,int((test_duration-1.1)/dt)], rates[:,:,-1], atol=0.1, rtol=0., equal_nan=False)
-    assert stable, "r0 did not stabilize"
-    r0 = rates[:,:,-1]
-    
-    # make stimulus map
-    l_stim = np.ones((numPairs)) * amp * l_kernel
-    l_stim = np.repeat(l_stim[:, np.newaxis], int(dur/dt), axis=1)
-    r_stim = np.ones((numPairs)) * amp * r_kernel
-    r_stim = np.repeat(r_stim[:, np.newaxis], int(dur/dt), axis=1)
-    stim_map = {'L': l_stim, 'R': r_stim}
-    
-    dt1 = dt
-    rates, IappE = lrt.encode_sequence(numPairs, pset, Wji, r0, sequence, 
-                                       stim_map, 2, dt=dt1, return_timeseries=True)
-    
-    return rates, IappE
-
 def plot_FSM(FSM, ax, color_map={'L': 'blue', 'R': 'red'}, connection_map={'L': 'arc3,rad=0.1', 'R': 'arc3,rad=0.2'}, node_size=800, font_size=None):
     """Hard coded for this example"""
     
