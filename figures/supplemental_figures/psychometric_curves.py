@@ -54,10 +54,17 @@ print(f'Linear AIC: {linear_AIC}, BIC: {linear_BIC}, RSS: {np.sum(linear_rss ** 
 plt.figure(figsize=(5, 3), layout='constrained')
 plt.plot(cue_count, good_p_curves.T, color='gray', alpha=0.05)
 log_label = fr'$y = \frac{{{popt[2]:.2f}}}{{1 + e^{{-{popt[0]:.2f}(x - {popt[1]:.2f})}}}}$'
-plt.plot(cue_count, logistic(cue_count, *popt), '-o' ,color='red', linewidth=2, label=log_label)
+plt.plot(cue_count, logistic(cue_count, *popt), '-o' ,color='red', linewidth=2, label=log_label, alpha=0.7)
 lin_label = fr'$y = {popt_linear[0]:.2f}x + {popt_linear[1]:.2f}$'
-plt.plot(cue_count, linear(cue_count, *popt_linear), '-o', color='blue', linewidth=2, label=lin_label)
+plt.plot(cue_count, linear(cue_count, *popt_linear), '-o', color='blue', linewidth=2, label=lin_label, alpha=0.7)
+
+# plot mean + SEM
+mean_p_curve = np.mean(good_p_curves, axis=0)
+sem_p_curve = np.std(good_p_curves, axis=0) / np.sqrt(good_p_curves.shape[0])
+plt.errorbar(cue_count, mean_p_curve, yerr=sem_p_curve, color='black', fmt='--', label='Mean ± SEM', capsize=20, alpha=0.7, linewidth=1)
+
 plt.xlabel('# of L cues in sequence')
 plt.ylabel('P(choose L)')
 plt.legend()
 plt.savefig('figures/supplemental_figures/psychometric_curves.png', dpi=plt.rcParams['figure.dpi'])
+plt.savefig('figures/supplemental_figures/psychometric_curves.tiff', dpi=plt.rcParams['figure.dpi'])

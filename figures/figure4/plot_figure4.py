@@ -112,7 +112,7 @@ def plot_trace(rates, IappE, ax1, ax2):
         new_rates[2*i] = rates[i, 0]
         new_rates[2*i + 1] = rates[i, 1]
     # plot firing rates
-    vals = ax1.imshow(new_rates[:, :], cmap = 'afmhot', interpolation='nearest', aspect='auto', vmin=0, vmax= int(np.max(new_rates))+1)
+    vals = ax1.imshow(new_rates[:, :], cmap = 'afmhot', interpolation='nearest', aspect='auto', vmin=0, vmax=15)
     ax1.set_ylabel("Pair ID")
     ax1.set_yticks(np.arange(0.5, 2*numPairs, 2), labels=np.arange(numPairs), minor=False)
     ax1.grid(which='minor', color='k', linestyle='-', linewidth=2)
