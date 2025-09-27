@@ -66,7 +66,7 @@ axd['A'].set_title('A', loc='left', fontweight='bold')
 axd['B'].set_title('B', loc='left', fontweight='bold')
 
 c = plot_tr_vs_det(axd['B'])
-cbar = fig.colorbar(c, cax=axd['x'], location='right')
+cbar = fig.colorbar(c, cax=axd['x'], location='right', label='State Count')
 
 plot_n_pairs_vs_states(axd['A'])
 
