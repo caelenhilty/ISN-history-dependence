@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import csv as csv
 
 import sys
@@ -104,6 +105,10 @@ for label, ax in axd.items():
         ax.set_xlabel(r'$\tau_{dur} (s)$')
         if label == 'B':
             ax.set_ylabel(r'$I_{app}$')
+        elif label == 'D':
+            # add a legend with a dummy patch
+            legend_elements = [Patch(facecolor='black', edgecolor='black', label='State-dependent')]
+            ax.legend(handles=legend_elements, loc='upper right')
             
 plt.savefig('figures/figure2/figure2.png', dpi=600)
 plt.savefig('figures/figure2/figure2.tiff', dpi=600)
