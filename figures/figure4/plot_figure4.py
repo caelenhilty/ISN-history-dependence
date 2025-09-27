@@ -134,7 +134,7 @@ axd = fig.subplot_mosaic(
     """
     axBX
     axCC
-    SxCC
+    SNCC
     """,
     width_ratios=[1, 0.1, 1, 0.1],
     height_ratios=[3,2,1]
@@ -147,6 +147,9 @@ for name, ax in axd.items():
     label = label_dict.get(name, None)
     if label is not None:
         ax.set_title(label, loc='left', fontweight='bold')
+        
+# hide axis N
+axd['N'].axis('off')
 
 # share axes
 axd['a'].sharex(axd['S'])
