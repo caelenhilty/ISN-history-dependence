@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import csv as csv
@@ -75,7 +76,8 @@ for label, ax in axd.items():
         continue
     if label == 'a':
         # plot the determinant vs trace mesh
-        c = ax.pcolormesh(determinant_mesh, trace_mesh, tolerance.reshape(trace_mesh.shape), shading='auto', cmap='viridis')
+        c = ax.pcolormesh(determinant_mesh, trace_mesh, tolerance.reshape(trace_mesh.shape), shading='auto', cmap='viridis',
+                          norm=matplotlib.colors.SymLogNorm(linthresh=np.min(tolerance[tolerance>0])*0.8))
         for i, point in enumerate(selected_points):
             x, y = point
             ax.text(determinant_mesh[x,0], traces[y], chr(66 + i), color='red', fontsize=10, ha='center', va='center')
