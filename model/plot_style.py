@@ -22,4 +22,4 @@ MAX_WIDTH = 4500
 MAX_HEIGHT = 5250
 
 inh_blue = "#7879ff"
-excit_red = '#F58E89'
+excit_red = "#F58E89"

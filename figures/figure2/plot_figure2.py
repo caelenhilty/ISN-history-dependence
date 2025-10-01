@@ -53,7 +53,7 @@ for data in raw_areas:
     
     # normalize area by number of stimuli
     area_norm = area / n_stimuli
-    fold_area = area_norm * Lx * Ly     # convert area to fold-fold change
+    fold_area = (Lx * Ly) ** area_norm  # convert area to fold-fold change
     tolerances.append(2*np.sqrt(fold_area/np.pi))   # diameter of the "circle" in fold-fold space
 
 tolerance = np.array(tolerances).reshape((n,n))
@@ -63,25 +63,26 @@ selected_points = [(1, 5), (15, 15),(10, 35)] # adjust to match data_figure2_sti
 
 # plot
 px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
-fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_WIDTH*px*0.8))
+fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_WIDTH*px))
 axd = fig.subplot_mosaic(
     """
-    xxaaaA
-    CCDDEE
+    xxC
+    BbD
+    BbE
     """,
-    width_ratios=[1, 0.2, 1, 0.2, 1, 0.2],
-    height_ratios = [3, 2]
+    width_ratios=[1.9, 0.1, 1],
+    height_ratios=[1, 1, 1]
 )
-# C, D, and E share the same y-axis
-axd['C'].sharey(axd['D'])
-axd['D'].sharey(axd['E'])
-axd['a'].set_title('B', loc='left', fontweight='bold')
+# C, D, and E share the same x-axis
+axd['C'].sharex(axd['D'])
+axd['D'].sharex(axd['E'])
+axd['B'].set_title('B', loc='left', fontweight='bold')
 for label, ax in axd.items():
     if label == 'x':
         axd['x'].set_title('A', loc='left', fontweight='bold')
         ax.axis('off')
         continue
-    if label == 'a':
+    if label == 'B':
         # plot the determinant vs trace mesh
         c = ax.pcolormesh(determinant_mesh, trace_mesh, tolerance.reshape(trace_mesh.shape), shading='auto', cmap='viridis',
                           norm=matplotlib.colors.SymLogNorm(linthresh=np.min(tolerance[tolerance>0])*0.8))
@@ -100,7 +101,7 @@ for label, ax in axd.items():
         trace_line = trace_line[idx_min:idx_max]
         ax.plot(det_line, trace_line, 'r--', label=r'$tr^2 = 4 \Delta$')
         ax.legend()
-        cbar = fig.colorbar(c, cax=axd['A'])
+        cbar = fig.colorbar(c, cax=axd['b'])
         cbar.set_label('Tolerance')
         cbar.ax.yaxis.set_label_position('left')
     elif label in ['C', 'D', 'E']:  
