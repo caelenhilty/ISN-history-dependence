@@ -54,16 +54,18 @@ def plot_n_pairs_vs_states(ax):
     ax.legend()
     
 px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
-fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_HEIGHT*px*0.4))
+fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_HEIGHT*px*0.3))
 axd = fig.subplot_mosaic(
     """
-    ABx
+    XABx
     """,
-    width_ratios=[1, 1, 0.1]
+    width_ratios=[1, 1, 1, 0.1]
 )
 # add titles
-axd['A'].set_title('A', loc='left', fontweight='bold')
-axd['B'].set_title('B', loc='left', fontweight='bold')
+axd['X'].axis('off')
+axd['X'].set_title('A', loc='left', fontweight='bold')
+axd['A'].set_title('B', loc='left', fontweight='bold')
+axd['B'].set_title('C', loc='left', fontweight='bold')
 
 c = plot_tr_vs_det(axd['B'])
 cbar = fig.colorbar(c, cax=axd['x'], location='right', label='State Count')
