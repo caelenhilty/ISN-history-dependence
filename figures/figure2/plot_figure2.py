@@ -49,7 +49,7 @@ for data in raw_areas:
                 (get_idx(stimulus_amplitudes, amp_max) - get_idx(stimulus_amplitudes, amp_min) + 1)
     
     area_norm = area / n_stimuli
-    fold_area = area_norm * Lx * Ly     # convert area to fold-fold change
+    fold_area = (Lx * Ly)**area_norm     # convert area to fold-fold change
     tolerances.append(2*np.sqrt(fold_area/np.pi))   # diameter of the "circle" in fold-fold space
 
 tolerance = np.array(tolerances).reshape((n,n))
