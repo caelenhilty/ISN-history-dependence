@@ -37,21 +37,17 @@ for data in raw_areas:
         tolerances.append(0)
         continue
     mask = np.array(data == 1).reshape(dur_mesh.shape)
-    
-    # find min enclosing rectangle in fold-change space
     dur_max = np.max(dur_mesh[mask])
     dur_min = np.min(dur_mesh[mask])
-    Lx = dur_max / dur_min 
+    Lx = dur_max / dur_min
     amp_max = np.max(amp_mesh[mask])
     amp_min = np.min(amp_mesh[mask])
     Ly = amp_max / amp_min
     
-    # count number of stimuli in the rectangle
     get_idx = lambda arr, val: np.argmin(np.abs(arr - val))
     n_stimuli = (get_idx(stimulus_durations, dur_max) - get_idx(stimulus_durations, dur_min) + 1) * \
                 (get_idx(stimulus_amplitudes, amp_max) - get_idx(stimulus_amplitudes, amp_min) + 1)
     
-    # normalize area by number of stimuli
     area_norm = area / n_stimuli
     fold_area = area_norm * Lx * Ly     # convert area to fold-fold change
     tolerances.append(2*np.sqrt(fold_area/np.pi))   # diameter of the "circle" in fold-fold space
@@ -63,23 +59,20 @@ selected_points = [(1, 5), (15, 15),(10, 35)] # adjust to match data_figure2_sti
 
 # plot
 px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
-fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_WIDTH*px*0.8))
+fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_WIDTH*px))
 axd = fig.subplot_mosaic(
     """
-    xxaaaA
-    CCDDEE
+    Aaaaaa
+    BBCCDD
     """,
-    width_ratios=[1, 0.2, 1, 0.2, 1, 0.2],
-    height_ratios = [3, 2]
+    width_ratios=[0.5, 1, 0.5, 1, 0.5, 1],
+    height_ratios = [1, 0.4]
 )
-# C, D, and E share the same y-axis
-axd['C'].sharey(axd['D'])
-axd['D'].sharey(axd['E'])
-axd['a'].set_title('B', loc='left', fontweight='bold')
+# B, C, and D share the same y-axis
+axd['B'].sharey(axd['C'])
+axd['A'].set_title('A', loc='left', fontweight='bold')
 for label, ax in axd.items():
-    if label == 'x':
-        axd['x'].set_title('A', loc='left', fontweight='bold')
-        ax.axis('off')
+    if label == 'd':
         continue
     if label == 'a':
         # plot the determinant vs trace mesh
@@ -87,7 +80,7 @@ for label, ax in axd.items():
                           norm=matplotlib.colors.SymLogNorm(linthresh=np.min(tolerance[tolerance>0])*0.8))
         for i, point in enumerate(selected_points):
             x, y = point
-            ax.text(determinant_mesh[x,0], traces[y], chr(67 + i), color='red', fontsize=10, ha='center', va='center', fontweight='bold')
+            ax.text(determinant_mesh[x,0], traces[y], chr(66 + i), color='red', fontsize=10, ha='center', va='center')
         ax.set_xscale('symlog')
         ax.set_yscale('symlog')
         ax.set(ylabel=r'Trace', xlabel=r'Determinant $\Delta$')
@@ -103,8 +96,8 @@ for label, ax in axd.items():
         cbar = fig.colorbar(c, cax=axd['A'])
         cbar.set_label('Tolerance')
         cbar.ax.yaxis.set_label_position('left')
-    elif label in ['C', 'D', 'E']:  
-        idx = ord(label) - ord('C')
+    elif label in ['B', 'C', 'D']:  
+        idx = ord(label) - ord('B')
         x, y = selected_points[idx][0], selected_points[idx][1]
         sweep_results = raw_areas.reshape(n, n, m, m)[x, y, :, :]
         ax.set_title(label + f"    tolerance = {tolerance[x, y]:.1f}", loc='left', fontweight='bold')
@@ -112,9 +105,9 @@ for label, ax in axd.items():
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlabel(r'$\tau_{dur} (s)$')
-        if label == 'C':
+        if label == 'B':
             ax.set_ylabel(r'$I_{app}$')
-        elif label == 'E':
+        elif label == 'D':
             # add a legend with a dummy patch
             legend_elements = [Patch(facecolor='black', edgecolor='black', label='State-dependent')]
             ax.legend(handles=legend_elements, loc='upper right')
