@@ -62,15 +62,15 @@ px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
 fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_WIDTH*px))
 axd = fig.subplot_mosaic(
     """
-    Aaaaaa
     BBCCDD
+    Aaaaaa
     """,
     width_ratios=[0.5, 1, 0.5, 1, 0.5, 1],
-    height_ratios = [1, 0.4]
+    height_ratios = [0.4, 1]
 )
 # B, C, and D share the same y-axis
 axd['B'].sharey(axd['C'])
-axd['A'].set_title('A', loc='left', fontweight='bold')
+axd['A'].set_title('D', loc='left', fontweight='bold')
 for label, ax in axd.items():
     if label == 'd':
         continue
@@ -80,7 +80,8 @@ for label, ax in axd.items():
                           norm=matplotlib.colors.SymLogNorm(linthresh=np.min(tolerance[tolerance>0])*0.8))
         for i, point in enumerate(selected_points):
             x, y = point
-            ax.text(determinant_mesh[x,0], traces[y], chr(66 + i), color='red', fontsize=10, ha='center', va='center')
+            ax.scatter(determinant_mesh[x,0], traces[y], color='red')
+            ax.text(determinant_mesh[x,0]*1.1, traces[y]*1.1, chr(65 + i), color='red', fontsize=10, ha='center', va='center')
         ax.set_xscale('symlog')
         ax.set_yscale('symlog')
         ax.set(ylabel=r'Trace', xlabel=r'Determinant $\Delta$')
@@ -94,13 +95,14 @@ for label, ax in axd.items():
         ax.plot(det_line, trace_line, 'r--', label=r'$tr^2 = 4 \Delta$')
         ax.legend()
         cbar = fig.colorbar(c, cax=axd['A'])
-        cbar.set_label('Tolerance')
+        cbar.set_label('Tolerance (fold)')
         cbar.ax.yaxis.set_label_position('left')
-    elif label in ['B', 'C', 'D']:  
+    elif label in ['B', 'C', 'D']:
+        label_dict = {'B':'A', 'C':'B', 'D':'C'}
         idx = ord(label) - ord('B')
         x, y = selected_points[idx][0], selected_points[idx][1]
         sweep_results = raw_areas.reshape(n, n, m, m)[x, y, :, :]
-        ax.set_title(label + f"    tolerance = {tolerance[x, y]:.1f}", loc='left', fontweight='bold')
+        ax.set_title(label_dict[label] + f"    tolerance = {tolerance[x, y]:.1f}", loc='left', fontweight='bold')
         c = ax.pcolormesh(dur_mesh, amp_mesh, sweep_results.reshape((m, m)), shading='auto', cmap='binary')
         ax.set_xscale('log')
         ax.set_yscale('log')
