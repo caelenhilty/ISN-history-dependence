@@ -6,7 +6,7 @@ import multiprocessing as mp
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from figures.figure2.__dev.data_figure2_stim_v_flip_flop import trial
+from figures.figure2.data_figure2_stim_v_flip_flop import trial
 from model import util, left_right_task as lrt, network_model
 
 # core parameters
