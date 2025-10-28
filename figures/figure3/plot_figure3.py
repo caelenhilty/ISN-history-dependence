@@ -35,11 +35,14 @@ def plot_tr_vs_det(ax):
     
     return c
 
-def plot_n_pairs_vs_states(ax):
-    ns = nPairs_counts[:,1]
-    counts = nPairs_counts[:,2]
-    ax.scatter(ns, counts, c='k')
-        
+def plot_n_pairs_vs_states(ax, data, scale, color, shape):
+    ns = data[:,1]
+    counts = data[:,2]
+    size = 12
+    size += 4 if shape == '*' else 1 if shape == '^' else 0
+    ax.scatter(ns, counts, c=color, s=size, alpha=1, zorder=1, marker=shape,
+               label=r"$\beta$ = " + f"{scale:.1f}".rstrip('0').rstrip('.'), edgecolors='k', linewidths=0.2)
+    
     # exponential fit
     def exp_func(x, a, b):
         return a * np.power(b, x)
@@ -47,11 +50,11 @@ def plot_n_pairs_vs_states(ax):
     
     fit_ns = np.linspace(min(ns-1), max(ns+1), 100)
     a, b = exp_coeffs
-    ax.plot(fit_ns, exp_func(fit_ns, *exp_coeffs), 'r--', label=r"$y = $" + fr"${a:.2f}$" + '\u00D7' + fr"${b:.2f}^N$")
+    ax.plot(fit_ns, exp_func(fit_ns, *exp_coeffs), c=color, linestyle='--', zorder=0, linewidth=1)
+    print(f"Scale: {scale}, Exponential fit: count = {a:.2f} * {b:.2f}^N")
     ax.set_xlabel('# of Pairs (N)')
     ax.set_ylabel('State Count')
     ax.set_yscale('log')
-    ax.legend()
     
 px = 1/plt.rcParams['figure.dpi']   # convert pixel to inches
 fig = plt.figure(layout='constrained', figsize=(plot_style.MAX_WIDTH*px, plot_style.MAX_HEIGHT*px*0.3))
@@ -70,7 +73,19 @@ axd['B'].set_title('C', loc='left', fontweight='bold')
 c = plot_tr_vs_det(axd['B'])
 cbar = fig.colorbar(c, cax=axd['x'], location='right', label='State Count')
 
-plot_n_pairs_vs_states(axd['A'])
+axd['A'].grid(True, which='major', linestyle='--', linewidth=0.5, alpha=0.7, zorder=-1)
+axd['A'].set_axisbelow(True)
+unique_scales = np.unique(nPairs_counts[:,0])
+shapes = ['D', '*', '^']
+for i, scale in enumerate(unique_scales):
+    shape = shapes[i % len(shapes)]
+    color = plt.cm.Paired(2*i)
+    # make it a 2d array with a single row
+    color = np.array(color).reshape(1, -1)
+    plot_n_pairs_vs_states(axd['A'], nPairs_counts[nPairs_counts[:,0] == scale][:, 1:], scale, color, shape)
+axd['A'].set_xticks(np.arange(1, 11, 2))
+# axd['A'].set_ylim(1, 10**4)
+axd['A'].legend(loc='upper left')
 
 plt.savefig('figures/figure3/figure3.png')
 plt.savefig('figures/figure3/figure3.tiff', dpi=600)
