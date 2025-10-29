@@ -1,4 +1,4 @@
-# miller-lab-final
+# Inhibition Stabilized Network history dependence
 Codes for Hilty and Miller, Unpublished: "Inhibitory-stabilization is sufficient for history-dependent computation in a randomly connected attractor network"
 
 ## File Structure
