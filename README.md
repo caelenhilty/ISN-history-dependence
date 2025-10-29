@@ -1,5 +1,5 @@
 # miller-lab-final
-Codes for Hilty and Miller, 2026: "Inhibitory-stabilization is sufficient for history-dependent computation in a randomly connected attractor network"
+Codes for Hilty and Miller, Unpublished: "Inhibitory-stabilization is sufficient for history-dependent computation in a randomly connected attractor network"
 
 ## File Structure
     |-- undefined
@@ -17,11 +17,11 @@ Codes for Hilty and Miller, 2026: "Inhibitory-stabilization is sufficient for hi
         |   |-- figure2
         |   |-- figure3
         |   |-- figure4
-        |   |   |-- data_figure4_all_states.py --> data_figure4_stim_sweep_vs_max_itinerancy.py
+        |   |   |-- run `data_figure4_all_states.py` before `data_figure4_stim_sweep_vs_max_itinerancy.py`
         |   |-- figure5
         |   |-- figure6
         |   |-- figure7
-        |   |   |-- make_Wjis.py --> all data_{}.py files
+        |   |   |-- `make_Wjis.py` generates `all data_{}.py` files which are necessary for other data `.py` files
 
 - `model`: Contains the core model code, including fiducial network parameters and simulation functions.
 - `figures`: Contains the code and data for generating figures. Each folder contains two types of `.py` scripts: those for generating the data and one for plotting the figure. Data used in the paper is also included in these folders. Note 1: If you generate your own data, you will need to change file paths accordingly in the plotting scripts. Note 2: some data scripts have dependencies on each other -- this is specified above when relevant.
