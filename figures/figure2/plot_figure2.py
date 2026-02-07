@@ -33,24 +33,18 @@ dur_mesh, amp_mesh = np.meshgrid(stimulus_durations, stimulus_amplitudes)
 tolerances = []
 for data in raw_areas:
     area = np.sum(data)
-    if area == 0:
-        tolerances.append(0)
-        continue
-    mask = np.array(data == 1).reshape(dur_mesh.shape)
-    dur_max = np.max(dur_mesh[mask])
-    dur_min = np.min(dur_mesh[mask])
+    dur_max = np.max(dur_mesh)
+    dur_min = np.min(dur_mesh)
     Lx = dur_max / dur_min
-    amp_max = np.max(amp_mesh[mask])
-    amp_min = np.min(amp_mesh[mask])
+    amp_max = np.max(amp_mesh)
+    amp_min = np.min(amp_mesh)
     Ly = amp_max / amp_min
     
-    get_idx = lambda arr, val: np.argmin(np.abs(arr - val))
-    n_stimuli = (get_idx(stimulus_durations, dur_max) - get_idx(stimulus_durations, dur_min) + 1) * \
-                (get_idx(stimulus_amplitudes, amp_max) - get_idx(stimulus_amplitudes, amp_min) + 1)
+    n_stimuli = dur_mesh.size
     
     area_norm = area / n_stimuli
-    fold_area = (Lx * Ly)**area_norm     # convert area to fold-fold change
-    tolerances.append(2*np.sqrt(fold_area/np.pi))   # diameter of the "circle" in fold-fold space
+    D = np.sqrt(4 * area_norm * np.log10(Lx) * np.log10(Ly) / np.pi)
+    tolerances.append(10 ** D - 1) 
 
 tolerance = np.array(tolerances).reshape((n,n))
 
@@ -76,8 +70,8 @@ for label, ax in axd.items():
         continue
     if label == 'a':
         # plot the determinant vs trace mesh
-        c = ax.pcolormesh(determinant_mesh, trace_mesh, tolerance.reshape(trace_mesh.shape), shading='auto', cmap='viridis',
-                          norm=matplotlib.colors.SymLogNorm(linthresh=np.min(tolerance[tolerance>0])*0.8))
+        c = ax.pcolormesh(determinant_mesh, trace_mesh, tolerance.reshape(trace_mesh.shape), shading='auto', cmap='viridis')
+                        #   norm=matplotlib.colors.SymLogNorm(linthresh=np.min(tolerance[tolerance>0])*0.8))
         for i, point in enumerate(selected_points):
             x, y = point
             ax.scatter(determinant_mesh[x,0], traces[y], color='red')
