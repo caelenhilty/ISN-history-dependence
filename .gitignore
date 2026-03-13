@@ -2,3 +2,4 @@ model/__pycache__/
 *.pyc
 *.nbc
 *.nbi
+**/__dev/
